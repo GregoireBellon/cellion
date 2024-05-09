@@ -2,12 +2,14 @@ use std::{
     error::Error,
     io::BufRead,
     path::Path,
-    str::{self, from_utf8, FromStr},
+    str::{self, FromStr},
 };
 
 use actix_multipart::form::{tempfile::TempFile, MultipartForm};
-use actix_web::{error as actix_error, post, Error as ActixError, HttpResponse, Responder};
-use log::{debug, error};
+use actix_web::{error as actix_error, post, web, Error as ActixError, HttpResponse, Responder};
+use chrono::Utc;
+use diesel::ExpressionMethods;
+use log::error;
 use quick_xml::{
     de::from_str,
     events::{BytesStart, Event},
@@ -15,9 +17,15 @@ use quick_xml::{
 };
 use serde::de::DeserializeOwned;
 
-use crate::api::xml_types::{XmlRoom, XmlTeacher};
+use crate::{
+    api::{
+        publish_service::SolutionInserter,
+        xml_types::{XmlRoom, XmlTeacher},
+    },
+    schema, DbPool,
+};
 
-use super::xml_types::{XmlCourse, XmlSession, XmlSolutionClass, XmlSolutionGroup};
+use super::xml_types::{XmlCourse, XmlSession, XmlSolutionClass, XmlSolutionGroup, XmlStudent};
 
 #[derive(MultipartForm)]
 struct SolutionUpload {
@@ -27,6 +35,7 @@ struct SolutionUpload {
 #[post("/solution")]
 pub async fn post_route(
     payload: MultipartForm<SolutionUpload>,
+    pool: web::Data<DbPool>,
 ) -> Result<impl Responder, ActixError> {
     match payload.file.content_type.as_ref() {
         Some(ct) => {
@@ -39,15 +48,40 @@ pub async fn post_route(
         None => return Result::Err(actix_error::ErrorBadRequest("No content")),
     };
 
-    match extract_file(payload.file.file.path()) {
-        Ok(()) => Ok(HttpResponse::Ok().body("The solution has been processed")),
-        Err(str) => Result::Err(actix_error::ErrorBadRequest(format!(
-            "Error while processing the file : {str}"
-        ))),
-    }
+    web::block(move || {
+        let mut conn = pool.get().expect("couldn't get db connection from pool");
+
+        let mut solution_inserter = SolutionInserter::new(
+            &mut conn,
+            &(
+                schema::solutions::filename.eq(payload
+                    .file
+                    .file_name
+                    .as_deref()
+                    .unwrap_or("UNKNOWN")),
+                schema::solutions::created_at.eq(&Utc::now().naive_utc()),
+            ),
+        )
+        .map_err(|e| format!("{:#?}", e))?;
+
+        extract_file(payload.file.file.path(), &mut solution_inserter)
+            .map_err(|e| e.to_string())?;
+
+        return solution_inserter
+            .insert_all_into_db()
+            .map_err(|e| e.to_string());
+    })
+    .await?
+    .map(|nb_inserted| {
+        HttpResponse::Ok().body(format!(
+            "The file has been processed : {} rows inserted",
+            nb_inserted
+        ))
+    })
+    .map_err(|e| actix_error::ErrorBadRequest(format!("Error while processing the file : {e}")))
 }
 
-fn extract_file(file: &Path) -> Result<(), String> {
+fn extract_file(file: &Path, solution_inserter: &mut SolutionInserter) -> Result<(), String> {
     let mut reader = Reader::from_file(file).map_err(|e| e.to_string())?;
 
     let mut buffer = Vec::new();
@@ -75,6 +109,7 @@ fn extract_file(file: &Path) -> Result<(), String> {
                         &mut junk_buffer,
                         &mut serialization_buffer,
                         &mut route,
+                        solution_inserter,
                     );
                 }
                 Event::End(_) => {
@@ -84,6 +119,7 @@ fn extract_file(file: &Path) -> Result<(), String> {
                         &mut junk_buffer,
                         &mut serialization_buffer,
                         &mut route,
+                        solution_inserter,
                     );
                     route.pop();
                 }
@@ -94,6 +130,7 @@ fn extract_file(file: &Path) -> Result<(), String> {
                     &mut junk_buffer,
                     &mut serialization_buffer,
                     &mut route,
+                    solution_inserter,
                 ),
             },
         };
@@ -108,6 +145,7 @@ fn handle_xml_event<R: BufRead>(
     buffer: &mut Vec<u8>,
     serialization_buffer: &mut Vec<u8>,
     route: &mut Vec<String>,
+    solution_inserter: &mut SolutionInserter,
 ) {
     match event {
         Event::Empty(bytes_start) => {
@@ -115,21 +153,42 @@ fn handle_xml_event<R: BufRead>(
                 && route.get(1).unwrap() == "rooms"
                 && bytes_start.name().into_inner() == b"room"
             {
-                handle_room_declaration(bytes_start, serialization_buffer);
+                handle_room_declaration(solution_inserter, bytes_start, serialization_buffer);
             } else if route.len() == 2
                 && route.get(1).unwrap() == "teachers"
                 && bytes_start.name().into_inner() == b"teacher"
             {
-                handle_teachers_declaration(bytes_start, serialization_buffer)
+                handle_teachers_declaration(solution_inserter, bytes_start, serialization_buffer)
             }
         }
 
         Event::Start(bytes_start) => {
             if route.len() == 3
+                && route.get(1).unwrap() == "students"
+                && bytes_start.name().into_inner() == b"student"
+            {
+                handle_students_declaration(
+                    solution_inserter,
+                    bytes_start,
+                    reader,
+                    buffer,
+                    serialization_buffer,
+                );
+
+                // manually pop the route, as handle_course_declaration parse the ending XML tag
+                route.pop();
+            } else if route.len() == 3
                 && route.get(1).unwrap() == "courses"
                 && bytes_start.name().into_inner() == b"course"
             {
-                handle_course_declaration(bytes_start, reader, buffer, serialization_buffer);
+                handle_course_declaration(
+                    solution_inserter,
+                    bytes_start,
+                    reader,
+                    buffer,
+                    serialization_buffer,
+                )
+                .ok();
 
                 // manually pop the route, as handle_course_declaration parse the ending XML tag
                 route.pop();
@@ -139,6 +198,7 @@ fn handle_xml_event<R: BufRead>(
                 && bytes_start.name().into_inner() == b"group"
             {
                 handle_solution_group_declaration(
+                    solution_inserter,
                     bytes_start,
                     reader,
                     buffer,
@@ -152,6 +212,7 @@ fn handle_xml_event<R: BufRead>(
                 && bytes_start.name().into_inner() == b"class"
             {
                 handle_solution_class_declaration(
+                    solution_inserter,
                     bytes_start,
                     reader,
                     buffer,
@@ -165,6 +226,7 @@ fn handle_xml_event<R: BufRead>(
                 && bytes_start.name().into_inner() == b"session"
             {
                 handle_solution_session_declaration(
+                    solution_inserter,
                     bytes_start,
                     reader,
                     buffer,
@@ -180,22 +242,22 @@ fn handle_xml_event<R: BufRead>(
 }
 
 fn handle_solution_session_declaration<R: BufRead>(
+    solution_inserter: &mut SolutionInserter,
     node: BytesStart,
     reader: &mut Reader<R>,
     buffer: &mut Vec<u8>,
     serialization_buffer: &mut Vec<u8>,
 ) {
     match deserialize_element::<XmlSession, R>(reader, &node, buffer, serialization_buffer) {
-        Ok(class) => {
-            // debug!("new session: {:?}", class);
+        Ok(session) => {
+            solution_inserter.add_session(session).ok();
         }
-        Err(e) => {
-            error!("Error while deserializing a session from solution: {}", e);
-        }
-    }
+        Err(e) => error!("Error while deserializing a session from solution: {}", e),
+    };
 }
 
 fn handle_solution_class_declaration<R: BufRead>(
+    solution_inserter: &mut SolutionInserter,
     node: BytesStart,
     reader: &mut Reader<R>,
     buffer: &mut Vec<u8>,
@@ -203,7 +265,7 @@ fn handle_solution_class_declaration<R: BufRead>(
 ) {
     match deserialize_element::<XmlSolutionClass, R>(reader, &node, buffer, serialization_buffer) {
         Ok(class) => {
-            // debug!("new class: {:?}", class);
+            solution_inserter.add_solution_class(class);
         }
         Err(e) => {
             error!("Error while deserializing class from solution: {}", e);
@@ -211,6 +273,7 @@ fn handle_solution_class_declaration<R: BufRead>(
     }
 }
 fn handle_solution_group_declaration<R: BufRead>(
+    solution_inserter: &mut SolutionInserter,
     node: BytesStart,
     reader: &mut Reader<R>,
     buffer: &mut Vec<u8>,
@@ -218,7 +281,7 @@ fn handle_solution_group_declaration<R: BufRead>(
 ) {
     match deserialize_element::<XmlSolutionGroup, R>(reader, &node, buffer, serialization_buffer) {
         Ok(group) => {
-            // debug!("new group: {:?}", group);
+            solution_inserter.add_solution_group(group);
         }
         Err(e) => {
             error!("Error while deserializing group from solution: {}", e);
@@ -226,47 +289,59 @@ fn handle_solution_group_declaration<R: BufRead>(
     }
 }
 fn handle_course_declaration<R: BufRead>(
+    solution_inserter: &mut SolutionInserter,
     node: BytesStart,
     reader: &mut Reader<R>,
     buffer: &mut Vec<u8>,
     serialization_buffer: &mut Vec<u8>,
-) {
+) -> Result<(), Box<dyn Error>> {
     match deserialize_element::<XmlCourse, R>(reader, &node, buffer, serialization_buffer) {
-        Ok(course) => {
-            // debug!("new course: {:?}", course);
-        }
+        Ok(course) => solution_inserter.add_course(course),
         Err(e) => {
             error!("Error while deserializing course: {}", e);
+            return Err(e);
         }
     }
 }
 
-fn handle_room_declaration(node: BytesStart, serialization_buffer: &mut Vec<u8>) {
+fn handle_room_declaration(
+    solution_inserter: &mut SolutionInserter,
+    node: BytesStart,
+    serialization_buffer: &mut Vec<u8>,
+) {
     match deserialize_empty_element::<XmlRoom>(node, serialization_buffer) {
-        Ok(room) => {
-            // debug!("new room : {:?}", room);
-        }
+        Ok(room) => solution_inserter.add_room(room),
         Err(e) => {
             error!("Error while deserializing room : {}", e);
         }
     }
 }
 
-fn handle_teachers_declaration(node: BytesStart, serialization_buffer: &mut Vec<u8>) {
-    match deserialize_empty_element::<XmlTeacher>(node, serialization_buffer) {
-        Ok(teacher) => {
-            // debug!("new teacher: {:?}", teacher);
-        }
+fn handle_students_declaration<R: BufRead>(
+    solution_inserter: &mut SolutionInserter,
+    node: BytesStart,
+    reader: &mut Reader<R>,
+    buffer: &mut Vec<u8>,
+    serialization_buffer: &mut Vec<u8>,
+) {
+    match deserialize_element::<XmlStudent, R>(reader, &node, buffer, serialization_buffer) {
+        Ok(student) => solution_inserter.add_student(student),
         Err(e) => {
             error!("Error while deserializing teacher: {}", e);
         }
     }
 }
-
-fn handle_sessions_declaration(node: BytesStart) {
-    let attributes = str::from_utf8(node.attributes_raw()).unwrap();
-    debug!("new sessions: {attributes}");
+fn handle_teachers_declaration(
+    solution_inserter: &mut SolutionInserter,
+    node: BytesStart,
+    serialization_buffer: &mut Vec<u8>,
+) {
+    match deserialize_empty_element::<XmlTeacher>(node, serialization_buffer) {
+        Ok(teacher) => solution_inserter.add_teacher(teacher),
+        Err(e) => error!("Error while deserializing teacher: {}", e),
+    }
 }
+
 fn deserialize_empty_element<T: DeserializeOwned>(
     element: BytesStart,
     output_buffer: &mut Vec<u8>,
@@ -274,7 +349,8 @@ fn deserialize_empty_element<T: DeserializeOwned>(
     output_buffer.clear();
 
     let mut w = Writer::new(&mut *output_buffer);
-    w.write_event(Event::Empty(element));
+    w.write_event(Event::Empty(element))
+        .map_err(Box::<quick_xml::Error>::from)?;
 
     return deserialize_from_buffer(output_buffer);
 }
@@ -288,22 +364,7 @@ fn deserialize_from_buffer<T: DeserializeOwned>(
     return from_str::<T>(str).map_err(|e| Box::from(e));
 }
 
-fn deserialize_event<T: DeserializeOwned, R: BufRead>(
-    event: Event,
-    reader: &mut Reader<R>,
-    junk_buf: &mut Vec<u8>,
-    output_buffer: &mut Vec<u8>,
-) -> Result<T, Box<dyn Error>> {
-    return match event {
-        Event::Start(start_tag) => {
-            deserialize_element::<T, R>(reader, &start_tag, junk_buf, output_buffer)
-        }
-        Event::Empty(empty_tag) => deserialize_empty_element::<T>(empty_tag, output_buffer),
-        _ => return Err(Box::from("This type of event is not supported")),
-    };
-}
-
-// From https://capnfabs.net/posts/parsing-huge-xml-quickxml-rust-serde/
+/// From https://capnfabs.net/posts/parsing-huge-xml-quickxml-rust-serde/
 fn deserialize_element<T: DeserializeOwned, R: BufRead>(
     reader: &mut Reader<R>,
     start_tag: &BytesStart,
@@ -334,16 +395,4 @@ fn deserialize_element<T: DeserializeOwned, R: BufRead>(
             _ => {}
         }
     }
-}
-
-fn deserialize_empty_event<'a, T: DeserializeOwned>(
-    tag: BytesStart,
-    output_buffer: &'a mut Vec<u8>,
-) -> &'a mut Vec<u8> {
-    output_buffer.clear();
-
-    let mut w = Writer::new(&mut *output_buffer);
-    w.write_event(Event::Empty(tag));
-
-    return output_buffer;
 }

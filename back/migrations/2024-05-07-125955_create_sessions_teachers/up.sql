@@ -1,9 +1,10 @@
 -- Your SQL goes here
 CREATE TABLE sessions_teachers (
+    solution_id INTEGER NOT NULL REFERENCES solutions,
     class_id TEXT NOT NULL,
     session_rank INTEGER NOT NULL,
     teacher_id TEXT NOT NULL,
-    PRIMARY KEY (class_id, session_rank, teacher_id),
-    FOREIGN KEY (class_id, session_rank) REFERENCES sessions (class_id, rank),
-    FOREIGN KEY (teacher_id) REFERENCES teachers
+    PRIMARY KEY (solution_id, class_id, session_rank, teacher_id),
+    FOREIGN KEY (solution_id, class_id, session_rank) REFERENCES sessions,
+    FOREIGN KEY (solution_id, teacher_id) REFERENCES teachers
 );
