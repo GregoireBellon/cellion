@@ -9,3 +9,8 @@ chrono = {version = "0.4.38", features = ["serde"]}
 serde = { version = "1", features = ["derive"] }
 diesel = { version = "2", features = ["sqlite", "r2d2", "chrono"] }
 dotenvy = "0.15"
+quick-xml = { version = "0.31", features = ["serialize"]}
+actix-multipart = "0.6"
+mime = "0.3.17"
+env_logger = "0.11.3"
+log = "0.4.21"
