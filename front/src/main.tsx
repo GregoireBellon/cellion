@@ -1,10 +1,38 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import App from './App.tsx'
-import './index.css'
+import React from "react";
+import ReactDOM from "react-dom/client";
+import App from "./components/App.tsx";
+import {
+  createBrowserRouter,
+  Navigate,
+  RouterProvider,
+} from "react-router-dom";
+import CalendarPage from "./components/CalendarPage/CalendarPage.tsx";
+import FilesPage from "./components/FilesPage.tsx";
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+const router = createBrowserRouter([
+  {
+    path: "/",
+    element: <App />,
+    children: [
+      { path: "", element: <Navigate replace to="calendar" /> },
+      {
+        path: "calendar",
+        element: <CalendarPage />,
+      },
+      {
+        path: "calendar/:fileId",
+        element: <CalendarPage />,
+      },
+      {
+        path: "files",
+        element: <FilesPage />,
+      },
+    ],
+  },
+]);
+
+ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>
-    <App />
-  </React.StrictMode>,
-)
+    <RouterProvider router={router} />
+  </React.StrictMode>
+);

@@ -11,7 +11,19 @@
   },
   "dependencies": {
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "@mui/material": "5.15.16",
+    "@emotion/react": "11.11.4",
+    "@emotion/styled": "11.11.5",
+    "@mui/icons-material": "5.15.16",
+    "@fullcalendar/react": "6.1.11",
+    "@fullcalendar/core": "6.1.11",
+    "@fullcalendar/daygrid": "6.1.11",
+    "@fullcalendar/timegrid": "6.1.11",
+    "@fullcalendar/interaction": "6.1.11",
+    "react-error-boundary": "4.0.13",
+    "react-router-dom": "6.23.0",
+    "axios": "1.6.8"
   },
   "devDependencies": {
     "@types/react": "^18.2.66",
