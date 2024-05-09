@@ -5,12 +5,14 @@ edition = "2021"
 
 [dependencies]
 actix-web = "4"
-chrono = {version = "0.4.38", features = ["serde"]}
+chrono = {version = "0.4"}
 serde = { version = "1", features = ["derive"] }
-diesel = { version = "2", features = ["sqlite", "r2d2", "chrono"] }
+diesel = { version = "2", features = ["sqlite", "r2d2", "time", "chrono", "uuid"] }
 dotenvy = "0.15"
 quick-xml = { version = "0.31", features = ["serialize"]}
 actix-multipart = "0.6"
 mime = "0.3.17"
 env_logger = "0.11.3"
 log = "0.4.21"
+
+uuid = {version = "1.8.0",features = ["v4", "fast-rng", "macro-diagnostics"]}

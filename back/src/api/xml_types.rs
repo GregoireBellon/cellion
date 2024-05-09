@@ -69,11 +69,35 @@ pub struct XmlSolutionGroup {
     #[serde(rename = "@headCount")]
     pub head_count: Option<i32>,
 
-    pub students: Option<XmlStudents>,
+    pub students: Option<XmlGroupStudents>,
+    pub classes: Option<XmlGroupClasses>,
 }
 
 #[derive(Deserialize, Debug)]
-pub struct XmlStudents {
+pub struct XmlGroupClasses {
+    #[serde(rename = "class", default)]
+    pub classes: Vec<XmlRefIdElement<String>>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct XmlStudent {
+    #[serde(rename = "@id")]
+    pub id: String,
+
+    #[serde(rename = "@label")]
+    pub label: Option<String>,
+
+    pub courses: Option<XmlCourses>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct XmlCourses {
+    #[serde(rename = "course", default)]
+    pub courses: Vec<XmlRefIdElement<String>>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct XmlGroupStudents {
     #[serde(rename = "student", default)]
     pub students: Vec<XmlRefIdElement<String>>,
 }
@@ -89,8 +113,21 @@ pub struct XmlSolutionClass {
     #[serde(rename = "@refId")]
     pub ref_id: String,
     pub groups: Option<XmlSolutionClassGroups>,
+    pub teachers: Option<XmlSolutionClassTeachers>,
+    pub rooms: Option<XmlSolutionClassRooms>,
 }
 
+#[derive(Deserialize, Debug)]
+pub struct XmlSolutionClassTeachers {
+    #[serde(rename = "teacher", default)]
+    pub teachers_id: Vec<XmlRefIdElement<String>>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct XmlSolutionClassRooms {
+    #[serde(rename = "room", default)]
+    pub rooms_id: Vec<XmlRefIdElement<String>>,
+}
 #[derive(Deserialize, Debug)]
 pub struct XmlSolutionClassGroups {
     #[serde(rename = "group", default)]
@@ -100,7 +137,7 @@ pub struct XmlSolutionClassGroups {
 #[derive(Deserialize, Debug)]
 pub struct XmlSession {
     #[serde(rename = "@rank")]
-    pub rank: String,
+    pub rank: i32,
 
     #[serde(rename = "@class")]
     pub class: String,
