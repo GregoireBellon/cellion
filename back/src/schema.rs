@@ -38,8 +38,8 @@ diesel::table! {
 diesel::table! {
     rooms (id) {
         id -> Text,
-        solution_id -> Binary,
-        capacity -> Integer,
+        solution_id -> Integer,
+        capacity -> Nullable<Integer>,
         name -> Nullable<Text>,
     }
 }
@@ -104,6 +104,7 @@ diesel::joinable!(classes -> parts (part_id));
 diesel::joinable!(classes_groups -> classes (class_id));
 diesel::joinable!(courses -> solutions (solution_id));
 diesel::joinable!(parts -> courses (course_id));
+diesel::joinable!(rooms -> solutions (solution_id));
 diesel::joinable!(sessions -> classes (class_id));
 diesel::joinable!(sessions_rooms -> rooms (room_id));
 diesel::joinable!(sessions_teachers -> teachers (teacher_id));

@@ -1,25 +1,25 @@
-use actix_web::{get, App, HttpResponse, HttpServer, Responder};
-use serde::Serialize;
+use actix_web::{get, middleware::Logger, App, HttpResponse, HttpServer, Responder};
 
-pub mod models;
-pub mod schema;
+mod api;
+mod models;
+mod schema;
 
-#[derive(Serialize)]
-struct Resp {
-    message: String,
-}
-
-#[get("/")]
+#[get("/health")]
 async fn hello() -> impl Responder {
-    return HttpResponse::Ok().json(Resp {
-        message: "hello world".to_string(),
-    });
+    return HttpResponse::Ok().body("healthy");
 }
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
-    HttpServer::new(|| App::new().service(hello))
-        .bind(("0.0.0.0", 8080))?
-        .run()
-        .await
+    env_logger::init_from_env(env_logger::Env::new().default_filter_or("debug"));
+
+    HttpServer::new(|| {
+        App::new()
+            .wrap(Logger::default())
+            .service(api::publish_solution::post_route)
+            .service(hello)
+    })
+    .bind(("0.0.0.0", 8080))?
+    .run()
+    .await
 }
