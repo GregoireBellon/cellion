@@ -15,7 +15,7 @@ use quick_xml::{
     events::{BytesStart, Event},
     Reader, Writer,
 };
-use serde::de::DeserializeOwned;
+use serde::{de::DeserializeOwned, Serialize};
 
 use crate::{
     api::{
@@ -32,7 +32,14 @@ struct SolutionUpload {
     #[multipart(rename = "solution")]
     file: TempFile,
 }
-#[post("/solution")]
+
+#[derive(Serialize)]
+struct UploadResult {
+    pub id: i32,
+    pub row_inserted: usize,
+}
+
+#[post("")]
 pub async fn post_route(
     payload: MultipartForm<SolutionUpload>,
     pool: web::Data<DbPool>,
@@ -69,15 +76,14 @@ pub async fn post_route(
 
         return solution_inserter
             .insert_all_into_db()
+            .map(|inserted| UploadResult {
+                id: solution_inserter.solution_id(),
+                row_inserted: inserted,
+            })
             .map_err(|e| e.to_string());
     })
     .await?
-    .map(|nb_inserted| {
-        HttpResponse::Ok().body(format!(
-            "The file has been processed : {} rows inserted",
-            nb_inserted
-        ))
-    })
+    .map(|result| HttpResponse::Ok().json(result))
     .map_err(|e| actix_error::ErrorBadRequest(format!("Error while processing the file : {e}")))
 }
 

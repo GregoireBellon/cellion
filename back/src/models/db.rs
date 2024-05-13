@@ -1,5 +1,6 @@
 use chrono::NaiveDateTime;
 use diesel::{dsl::Eq, prelude::*};
+use serde::Serialize;
 
 use crate::schema;
 
@@ -8,7 +9,7 @@ pub type InsertSolution<'a> = (
     Eq<schema::solutions::created_at, &'a NaiveDateTime>,
 );
 
-#[derive(Queryable, Selectable, Debug)]
+#[derive(Queryable, Serialize, Selectable, Debug)]
 #[diesel(table_name = crate::schema::solutions)]
 pub struct Solution {
     pub id: i32,
@@ -111,6 +112,14 @@ pub struct SessionTeacherOwn {
     pub class_id: String,
     pub session_rank: i32,
     pub teacher_id: String,
+}
+
+#[derive(Queryable, Selectable, Insertable, Debug, Hash, Eq, PartialEq)]
+#[diesel(table_name = crate::schema::groups)]
+
+pub struct SolutionGroupOwn {
+    pub solution_id: i32,
+    pub id: String,
 }
 
 #[derive(Queryable, Selectable, Insertable, Debug, Hash, Eq, PartialEq)]

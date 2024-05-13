@@ -1,16 +1,17 @@
-use std::{collections::HashSet, error::Error};
+use std::error::Error;
 
 use chrono::{DateTime, Datelike, Local, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc};
 use diesel::{self, QueryResult, RunQueryDsl, SqliteConnection};
+use log::error;
 use uuid::Uuid;
 
 use crate::{
     models::db::{
         last_insert_rowid, Class, ClassGroupOwn, ClassRoomOwn, ClassTeacherOwn, Course,
-        InsertSolution, Part, Room, Session, SessionRoomOwn, SessionTeacherOwn, Student,
-        StudentGroupOwn, Teacher,
+        InsertSolution, Part, Room, Session, SessionRoomOwn, SessionTeacherOwn, SolutionGroupOwn,
+        Student, StudentGroupOwn, Teacher,
     },
-    schema::{self},
+    schema,
 };
 
 use super::xml_types::{
@@ -19,20 +20,15 @@ use super::xml_types::{
     XmlStudent, XmlTeacher,
 };
 
-pub fn use_buffer<T, F, R>(buff: &mut Vec<T>, f: F) -> R
+fn use_buffer<T, F, R>(buff: &mut Vec<T>, rows_to_insert: &mut i32, f: F) -> R
 where
     F: FnOnce(&Vec<T>) -> R,
 {
     let ret = f(&buff);
+
+    *rows_to_insert -= buff.len() as i32;
     buff.clear();
-    return ret;
-}
-pub fn use_hashset_buffer<T, F, R>(buff: &mut HashSet<T>, f: F) -> R
-where
-    F: FnOnce(&HashSet<T>) -> R,
-{
-    let ret = f(&buff);
-    buff.clear();
+
     return ret;
 }
 
@@ -40,12 +36,15 @@ pub struct SolutionInserter<'a> {
     conn: &'a mut SqliteConnection,
     solution_id: i32,
 
+    rows_to_insert: i32,
+
     rooms_to_insert: Vec<Room>,
-    teachers_to_insert: HashSet<Teacher>,
+    teachers_to_insert: Vec<Teacher>,
     classes_to_insert: Vec<Class>,
     parts_to_insert: Vec<Part>,
     courses_to_insert: Vec<Course>,
     students_to_insert: Vec<Student>,
+    solution_groups_to_insert: Vec<SolutionGroupOwn>,
     students_groups_to_insert: Vec<StudentGroupOwn>,
     sessions_to_insert: Vec<Session>,
     sessions_teachers_to_insert: Vec<SessionTeacherOwn>,
@@ -69,12 +68,14 @@ impl<'a> SolutionInserter<'a> {
         return Ok(SolutionInserter {
             conn: conn,
             solution_id: solution_id,
+            rows_to_insert: 0,
             rooms_to_insert: Vec::new(),
-            teachers_to_insert: HashSet::new(),
+            teachers_to_insert: Vec::new(),
             classes_to_insert: Vec::new(),
             parts_to_insert: Vec::new(),
             courses_to_insert: Vec::new(),
             students_to_insert: Vec::new(),
+            solution_groups_to_insert: Vec::new(),
             students_groups_to_insert: Vec::new(),
             sessions_to_insert: Vec::new(),
             sessions_teachers_to_insert: Vec::new(),
@@ -85,86 +86,148 @@ impl<'a> SolutionInserter<'a> {
         });
     }
 
+    pub fn solution_id(&self) -> i32 {
+        self.solution_id
+    }
+
+    fn on_add_callback(&mut self) {
+        self.rows_to_insert += 1;
+
+        if self.rows_to_insert > 20000 {
+            if let Err(e) = self.insert_all_into_db() {
+                error!("Error while dumping the buffer : {e}");
+            }
+        }
+    }
+
+    // I would like to refactor this, but Diesel typing makes it really really hard....
+    // Storing the pair (vector, table) into a vector and iterating on it would be amazing
     pub fn insert_all_into_db(&mut self) -> QueryResult<usize> {
         let mut nb_inserted: usize = 0;
 
-        nb_inserted += use_buffer(&mut self.rooms_to_insert, |b| {
-            diesel::insert_into(schema::rooms::table)
+        nb_inserted += use_buffer(&mut self.rooms_to_insert, &mut self.rows_to_insert, |b| {
+            diesel::insert_or_ignore_into(schema::rooms::table)
                 .values(b)
                 .execute(self.conn)
         })?;
 
-        nb_inserted += use_hashset_buffer(&mut self.teachers_to_insert, |b| {
-            diesel::insert_into(schema::teachers::table)
-                .values(Vec::from_iter(b.iter()))
-                .execute(self.conn)
-        })?;
+        nb_inserted += use_buffer(
+            &mut self.teachers_to_insert,
+            &mut self.rows_to_insert,
+            |b| {
+                diesel::insert_or_ignore_into(schema::teachers::table)
+                    .values(b)
+                    .execute(self.conn)
+            },
+        )?;
 
-        nb_inserted += use_buffer(&mut self.classes_to_insert, |b| {
-            diesel::insert_into(schema::classes::table)
+        nb_inserted += use_buffer(&mut self.classes_to_insert, &mut self.rows_to_insert, |b| {
+            diesel::insert_or_ignore_into(schema::classes::table)
                 .values(b)
                 .execute(self.conn)
         })?;
 
-        nb_inserted += use_buffer(&mut self.parts_to_insert, |b| {
-            diesel::insert_into(schema::parts::table)
+        nb_inserted += use_buffer(&mut self.parts_to_insert, &mut self.rows_to_insert, |b| {
+            diesel::insert_or_ignore_into(schema::parts::table)
                 .values(b)
                 .execute(self.conn)
         })?;
 
-        nb_inserted += use_buffer(&mut self.courses_to_insert, |b| {
-            diesel::insert_into(schema::courses::table)
+        nb_inserted += use_buffer(&mut self.courses_to_insert, &mut self.rows_to_insert, |b| {
+            diesel::insert_or_ignore_into(schema::courses::table)
                 .values(b)
                 .execute(self.conn)
         })?;
 
-        nb_inserted += use_buffer(&mut self.students_to_insert, |b| {
-            diesel::insert_into(schema::students::table)
-                .values(b)
-                .execute(self.conn)
-        })?;
+        nb_inserted += use_buffer(
+            &mut self.students_to_insert,
+            &mut self.rows_to_insert,
+            |b| {
+                diesel::insert_or_ignore_into(schema::students::table)
+                    .values(b)
+                    .execute(self.conn)
+            },
+        )?;
 
-        nb_inserted += use_buffer(&mut self.students_groups_to_insert, |b| {
-            diesel::insert_into(schema::students_groups::table)
-                .values(b)
-                .execute(self.conn)
-        })?;
+        nb_inserted += use_buffer(
+            &mut self.solution_groups_to_insert,
+            &mut self.rows_to_insert,
+            |b| {
+                diesel::insert_or_ignore_into(schema::groups::table)
+                    .values(b)
+                    .execute(self.conn)
+            },
+        )?;
 
-        nb_inserted += use_buffer(&mut self.sessions_to_insert, |b| {
-            diesel::insert_into(schema::sessions::table)
-                .values(b)
-                .execute(self.conn)
-        })?;
+        nb_inserted += use_buffer(
+            &mut self.students_groups_to_insert,
+            &mut self.rows_to_insert,
+            |b| {
+                diesel::insert_or_ignore_into(schema::students_groups::table)
+                    .values(b)
+                    .execute(self.conn)
+            },
+        )?;
 
-        nb_inserted += use_buffer(&mut self.sessions_teachers_to_insert, |b| {
-            diesel::insert_into(schema::sessions_teachers::table)
-                .values(b)
-                .execute(self.conn)
-        })?;
+        nb_inserted += use_buffer(
+            &mut self.sessions_to_insert,
+            &mut self.rows_to_insert,
+            |b| {
+                diesel::insert_or_ignore_into(schema::sessions::table)
+                    .values(b)
+                    .execute(self.conn)
+            },
+        )?;
 
-        nb_inserted += use_buffer(&mut self.sessions_rooms_to_insert, |b| {
-            diesel::insert_into(schema::sessions_rooms::table)
-                .values(b)
-                .execute(self.conn)
-        })?;
+        nb_inserted += use_buffer(
+            &mut self.sessions_teachers_to_insert,
+            &mut self.rows_to_insert,
+            |b| {
+                diesel::insert_or_ignore_into(schema::sessions_teachers::table)
+                    .values(b)
+                    .execute(self.conn)
+            },
+        )?;
 
-        nb_inserted += use_buffer(&mut self.classes_groups_to_insert, |b| {
-            diesel::insert_into(schema::classes_groups::table)
-                .values(b)
-                .execute(self.conn)
-        })?;
+        nb_inserted += use_buffer(
+            &mut self.sessions_rooms_to_insert,
+            &mut self.rows_to_insert,
+            |b| {
+                diesel::insert_or_ignore_into(schema::sessions_rooms::table)
+                    .values(b)
+                    .execute(self.conn)
+            },
+        )?;
 
-        nb_inserted += use_buffer(&mut self.classes_teachers_to_insert, |b| {
-            diesel::insert_into(schema::classes_teachers::table)
-                .values(b)
-                .execute(self.conn)
-        })?;
+        nb_inserted += use_buffer(
+            &mut self.classes_groups_to_insert,
+            &mut self.rows_to_insert,
+            |b| {
+                diesel::insert_or_ignore_into(schema::classes_groups::table)
+                    .values(b)
+                    .execute(self.conn)
+            },
+        )?;
 
-        nb_inserted += use_buffer(&mut self.classes_rooms_to_insert, |b| {
-            diesel::insert_into(schema::classes_rooms::table)
-                .values(b)
-                .execute(self.conn)
-        })?;
+        nb_inserted += use_buffer(
+            &mut self.classes_teachers_to_insert,
+            &mut self.rows_to_insert,
+            |b| {
+                diesel::insert_or_ignore_into(schema::classes_teachers::table)
+                    .values(b)
+                    .execute(self.conn)
+            },
+        )?;
+
+        nb_inserted += use_buffer(
+            &mut self.classes_rooms_to_insert,
+            &mut self.rows_to_insert,
+            |b| {
+                diesel::insert_or_ignore_into(schema::classes_rooms::table)
+                    .values(b)
+                    .execute(self.conn)
+            },
+        )?;
 
         return Ok(nb_inserted);
     }
@@ -172,38 +235,49 @@ impl<'a> SolutionInserter<'a> {
     pub fn add_student(&mut self, student: XmlStudent) {
         self.students_to_insert
             .push(student.into_db_entry(self.solution_id));
+
+        self.on_add_callback();
     }
 
     pub fn add_teacher(&mut self, teacher: XmlTeacher) {
         self.teachers_to_insert
-            .insert(teacher.into_db_entry(self.solution_id));
+            .push(teacher.into_db_entry(self.solution_id));
+        self.on_add_callback();
     }
 
     pub fn add_room(&mut self, room: XmlRoom) {
         self.rooms_to_insert
             .push(room.into_db_entry(self.solution_id));
+        self.on_add_callback();
     }
 
     pub fn add_solution_group(&mut self, group: XmlSolutionGroup) {
+        self.solution_groups_to_insert
+            .push(group.into_db_entry(self.solution_id));
+
         group.classes.map(|classes| {
             self.classes_groups_to_insert
-                .extend(classes.into_db_entry(self.solution_id, &group.id))
+                .extend(classes.into_db_entry(self.solution_id, &group.id));
+            self.on_add_callback();
         });
         group.students.map(|students| {
             self.students_groups_to_insert
-                .extend(students.into_db_entry(self.solution_id, &group.id))
+                .extend(students.into_db_entry(self.solution_id, &group.id));
+            self.on_add_callback();
         });
     }
 
     pub fn add_solution_class(&mut self, class: XmlSolutionClass) {
         class.teachers.map(|teachers| {
             self.classes_teachers_to_insert
-                .extend(teachers.into_db_entry(self.solution_id, &class.ref_id))
+                .extend(teachers.into_db_entry(self.solution_id, &class.ref_id));
+            self.on_add_callback();
         });
 
         class.rooms.map(|rooms| {
             self.classes_rooms_to_insert
-                .extend(rooms.into_db_entry(self.solution_id, &class.ref_id))
+                .extend(rooms.into_db_entry(self.solution_id, &class.ref_id));
+            self.on_add_callback();
         });
     }
 
@@ -219,7 +293,9 @@ impl<'a> SolutionInserter<'a> {
                     teacher_id: t.ref_id,
                     session_rank: session.rank,
                     solution_id: self.solution_id,
-                })
+                });
+
+                self.on_add_callback();
             })
         });
 
@@ -230,7 +306,9 @@ impl<'a> SolutionInserter<'a> {
                     class_id: session.class.clone(),
                     session_rank: session.rank,
                     room_id: r.ref_id,
-                })
+                });
+
+                self.on_add_callback();
             })
         });
 
@@ -241,20 +319,28 @@ impl<'a> SolutionInserter<'a> {
         self.courses_to_insert
             .push(course.into_db_entry(self.solution_id));
 
+        let solution_id = self.solution_id;
+
         course.parts.into_iter().for_each(|part| {
             self.parts_to_insert
-                .push(part.into_db_entry(self.solution_id, &course.id));
+                .push(part.into_db_entry(solution_id, &course.id));
+
+            self.on_add_callback();
 
             part.classes
                 .class
                 .into_iter()
-                .map(|c| c.into_db_entry(self.solution_id, &part.id))
-                .for_each(|c| self.classes_to_insert.push(c));
+                .map(|c| c.into_db_entry(solution_id, &part.id))
+                .for_each(|c| {
+                    self.classes_to_insert.push(c);
+                    self.on_add_callback();
+                });
         });
 
         return Ok(());
     }
 }
+
 impl XmlClass {
     fn into_db_entry(self, given_solution_id: i32, given_part_id: &str) -> Class {
         Class {
@@ -349,6 +435,15 @@ impl XmlGroupStudents {
     }
 }
 
+impl XmlSolutionGroup {
+    fn into_db_entry(&self, given_solution_id: i32) -> SolutionGroupOwn {
+        SolutionGroupOwn {
+            id: self.id.to_owned(),
+            solution_id: given_solution_id,
+        }
+    }
+}
+
 impl XmlSolutionClassRooms {
     fn into_db_entry(
         self,
@@ -406,11 +501,11 @@ impl XmlSession {
         let starting_slot = &self.starting_slot.as_ref().unwrap();
 
         extracted_date = starting_date
-            .checked_add_signed(chrono::Duration::days(starting_slot.day as i64))
+            .checked_add_signed(chrono::Duration::weeks(starting_slot.week as i64))
             .unwrap_or(extracted_date);
 
         extracted_date = starting_date
-            .checked_add_signed(chrono::Duration::weeks(starting_slot.week as i64))
+            .checked_add_signed(chrono::Duration::days(starting_slot.day as i64))
             .unwrap_or(extracted_date);
 
         let extracted_time =
