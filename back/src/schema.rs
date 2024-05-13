@@ -52,6 +52,7 @@ diesel::table! {
         solution_id -> Integer,
         id -> Text,
         course_id -> Text,
+        session_lenght -> Integer,
         session_teachers -> Nullable<Integer>,
         session_rooms -> Nullable<Text>,
         session_length -> Nullable<Integer>,

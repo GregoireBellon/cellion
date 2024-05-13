@@ -1,6 +1,5 @@
 use actix_web::{get, middleware::Logger, web, App, HttpResponse, HttpServer, Responder};
 use diesel::{r2d2, SqliteConnection};
-
 mod api;
 mod models;
 mod schema;
@@ -27,8 +26,8 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(web::Data::new(pool.clone()))
             .wrap(Logger::default())
-            .service(api::publish_solution::post_route)
             .service(hello)
+            .service(api::get_scope())
     })
     .bind(("0.0.0.0", 8080))?
     .run()
