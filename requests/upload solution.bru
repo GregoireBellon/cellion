@@ -5,7 +5,11 @@ meta {
 }
 
 post {
-  url: {{base_url}}/solution
-  body: none
+  url: {{base_url}}/solutions
+  body: multipartForm
   auth: none
+}
+
+body:multipart-form {
+  solution: @file(/home/grego/Documents/Cours/cellion/resources/solution_ua_l1_p1-p2_l3-info_2023_060524_09_44_03.xml)
 }

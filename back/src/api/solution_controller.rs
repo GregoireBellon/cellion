@@ -19,10 +19,11 @@ use serde::{de::DeserializeOwned, Serialize};
 
 use crate::{
     api::{
-        publish_service::SolutionInserter,
+        solution_service::SolutionInserter,
         xml_types::{XmlRoom, XmlTeacher},
     },
-    schema, DbPool,
+    models::schema,
+    DbPool,
 };
 
 use super::xml_types::{XmlCourse, XmlSession, XmlSolutionClass, XmlSolutionGroup, XmlStudent};

@@ -1,0 +1,21 @@
+meta {
+  name: Get sessions
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{base_url}}/solutions/1/query
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "courses": ["AlgebreElementaire1"],
+    "parts": ["AlgebreElementaire1-CC"],
+    "teachers": [],
+    "rooms": [],
+    "groups": []
+  }
+}

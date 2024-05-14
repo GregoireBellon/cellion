@@ -1,12 +1,15 @@
 use std::error::Error;
 
 use chrono::{DateTime, Datelike, Local, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc};
-use diesel::{self, QueryResult, RunQueryDsl, SqliteConnection};
+use diesel::{
+    self, BoolExpressionMethods, ExpressionMethods, IntoSql, QueryDsl, QueryResult, RunQueryDsl,
+    SqliteConnection,
+};
 use log::error;
 use uuid::Uuid;
 
-use crate::{
-    models::db::{
+use crate::models::{
+    db::{
         last_insert_rowid, Class, ClassGroupOwn, ClassRoomOwn, ClassTeacherOwn, Course,
         InsertSolution, Part, Room, Session, SessionRoomOwn, SessionTeacherOwn, SolutionGroupOwn,
         Student, StudentGroupOwn, Teacher,
@@ -41,8 +44,8 @@ pub struct SolutionInserter<'a> {
     rooms_to_insert: Vec<Room>,
     teachers_to_insert: Vec<Teacher>,
     classes_to_insert: Vec<Class>,
-    parts_to_insert: Vec<Part>,
     courses_to_insert: Vec<Course>,
+    parts_to_insert: Vec<Part>,
     students_to_insert: Vec<Student>,
     solution_groups_to_insert: Vec<SolutionGroupOwn>,
     students_groups_to_insert: Vec<StudentGroupOwn>,
@@ -72,8 +75,8 @@ impl<'a> SolutionInserter<'a> {
             rooms_to_insert: Vec::new(),
             teachers_to_insert: Vec::new(),
             classes_to_insert: Vec::new(),
-            parts_to_insert: Vec::new(),
             courses_to_insert: Vec::new(),
+            parts_to_insert: Vec::new(),
             students_to_insert: Vec::new(),
             solution_groups_to_insert: Vec::new(),
             students_groups_to_insert: Vec::new(),
@@ -127,14 +130,14 @@ impl<'a> SolutionInserter<'a> {
                 .execute(self.conn)
         })?;
 
-        nb_inserted += use_buffer(&mut self.parts_to_insert, &mut self.rows_to_insert, |b| {
-            diesel::insert_or_ignore_into(schema::parts::table)
+        nb_inserted += use_buffer(&mut self.courses_to_insert, &mut self.rows_to_insert, |b| {
+            diesel::insert_or_ignore_into(schema::courses::table)
                 .values(b)
                 .execute(self.conn)
         })?;
 
-        nb_inserted += use_buffer(&mut self.courses_to_insert, &mut self.rows_to_insert, |b| {
-            diesel::insert_or_ignore_into(schema::courses::table)
+        nb_inserted += use_buffer(&mut self.parts_to_insert, &mut self.rows_to_insert, |b| {
+            diesel::insert_into(schema::parts::table)
                 .values(b)
                 .execute(self.conn)
         })?;
@@ -388,6 +391,7 @@ impl XmlPart {
             solution_id: given_solution_id,
             id: self.id.clone(),
             course_id: given_course_id.to_string(),
+            session_length: self.allowed_slots.session_lenght,
             session_teachers: None,
             session_rooms: None,
             label: self.label.clone(),

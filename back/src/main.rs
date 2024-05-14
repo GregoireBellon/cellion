@@ -2,7 +2,6 @@ use actix_web::{get, middleware::Logger, web, App, HttpResponse, HttpServer, Res
 use diesel::{r2d2, SqliteConnection};
 mod api;
 mod models;
-mod schema;
 
 type DbPool = r2d2::Pool<r2d2::ConnectionManager<SqliteConnection>>;
 
