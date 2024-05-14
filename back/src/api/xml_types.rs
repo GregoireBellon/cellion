@@ -30,6 +30,17 @@ pub struct XmlCourse {
 }
 
 #[derive(Deserialize, Debug)]
+pub struct XmlAllowedSlots {
+    #[serde(rename = "@sessionLength")]
+    pub session_lenght: i32,
+
+    #[serde(rename = "dailySlots")]
+    pub daily_slots: String,
+    pub days: String,
+    pub weeks: String,
+}
+
+#[derive(Deserialize, Debug)]
 pub struct XmlPart {
     #[serde(rename = "@id")]
     pub id: String,
@@ -37,6 +48,9 @@ pub struct XmlPart {
     pub label: Option<String>,
     #[serde(rename = "@nrSessions")]
     pub nr_session: Option<i32>,
+
+    #[serde(rename = "allowedSlots")]
+    pub allowed_slots: XmlAllowedSlots,
 
     pub classes: XmlClasses,
 }

@@ -2,7 +2,7 @@ use chrono::NaiveDateTime;
 use diesel::{dsl::Eq, prelude::*};
 use serde::Serialize;
 
-use crate::schema;
+use crate::models::schema;
 
 pub type InsertSolution<'a> = (
     Eq<schema::solutions::filename, &'a str>,
@@ -10,7 +10,7 @@ pub type InsertSolution<'a> = (
 );
 
 #[derive(Queryable, Serialize, Selectable, Debug)]
-#[diesel(table_name = crate::schema::solutions)]
+#[diesel(table_name = schema::solutions)]
 pub struct Solution {
     pub id: i32,
     pub filename: String,
@@ -18,7 +18,7 @@ pub struct Solution {
 }
 
 #[derive(Queryable, Selectable, Insertable, Debug, Hash, Eq, PartialEq)]
-#[diesel(table_name = crate::schema::teachers)]
+#[diesel(table_name = schema::teachers)]
 #[diesel(belongs_to(Solution))]
 pub struct Teacher {
     pub name: String,
@@ -26,9 +26,19 @@ pub struct Teacher {
     pub department: Option<String>,
 }
 
+#[derive(Queryable, Selectable)]
+#[diesel(table_name = schema::sessions_rooms)]
+pub struct SessionRoom {
+    pub solution_id: i32,
+    pub class_id: String,
+
+    pub session_rank: i32,
+    pub room_id: String,
+}
+
 #[derive(Queryable, Selectable, Insertable, Debug, Hash, Eq, PartialEq)]
+#[diesel(table_name = schema::rooms)]
 #[diesel(belongs_to(Solution))]
-#[diesel(table_name = crate::schema::rooms)]
 pub struct Room {
     pub id: String,
     pub solution_id: i32,
@@ -37,8 +47,8 @@ pub struct Room {
 }
 
 #[derive(Queryable, Selectable, Insertable, Debug, Hash, Eq, PartialEq)]
+#[diesel(table_name = schema::courses)]
 #[diesel(belongs_to(Solution))]
-#[diesel(table_name = crate::schema::courses)]
 pub struct Course {
     pub id: String,
     pub solution_id: i32,
@@ -46,13 +56,15 @@ pub struct Course {
 }
 
 #[derive(Hash, Eq, PartialEq, Queryable, Selectable, Insertable, Debug)]
+#[diesel(table_name = schema::parts)]
 #[diesel(belongs_to(Course))]
-#[diesel(table_name = crate::schema::parts)]
+#[diesel(belongs_to(Solution))]
 pub struct Part {
     pub solution_id: i32,
     pub id: String,
     pub course_id: String,
 
+    pub session_length: i32,
     pub session_teachers: Option<i32>,
     pub session_rooms: Option<String>,
     pub label: Option<String>,
@@ -62,7 +74,8 @@ pub struct Part {
 
 #[derive(Queryable, Selectable, Insertable, Debug, Hash, Eq, PartialEq)]
 #[diesel(belongs_to(Part))]
-#[diesel(table_name = crate::schema::classes)]
+#[diesel(belongs_to(Solution))]
+#[diesel(table_name = schema::classes)]
 pub struct Class {
     pub solution_id: i32,
     pub id: String,
@@ -71,7 +84,8 @@ pub struct Class {
 
 #[derive(Queryable, Selectable, Insertable, Debug, Hash, Eq, PartialEq)]
 #[diesel(belongs_to(Part))]
-#[diesel(table_name = crate::schema::students )]
+#[diesel(belongs_to(Solution))]
+#[diesel(table_name = schema::students )]
 pub struct Student {
     pub solution_id: i32,
     pub id: String,
@@ -79,7 +93,7 @@ pub struct Student {
 }
 
 #[derive(Queryable, Selectable, Insertable, Debug, Hash, Eq, PartialEq)]
-#[diesel(table_name = crate::schema::students_groups)]
+#[diesel(table_name = schema::students_groups)]
 pub struct StudentGroupOwn {
     pub solution_id: i32,
     pub student_id: String,
@@ -87,7 +101,7 @@ pub struct StudentGroupOwn {
 }
 
 #[derive(Queryable, Selectable, Insertable, Debug, Hash, Eq, PartialEq)]
-#[diesel(table_name = crate::schema::sessions)]
+#[diesel(table_name = schema::sessions)]
 pub struct Session {
     pub solution_id: i32,
     pub uuid: String,
@@ -97,7 +111,7 @@ pub struct Session {
 }
 
 #[derive(Queryable, Selectable, Insertable, Debug, Hash, Eq, PartialEq)]
-#[diesel(table_name = crate::schema::sessions_rooms)]
+#[diesel(table_name = schema::sessions_rooms)]
 pub struct SessionRoomOwn {
     pub solution_id: i32,
     pub class_id: String,
@@ -106,7 +120,7 @@ pub struct SessionRoomOwn {
 }
 
 #[derive(Queryable, Selectable, Insertable, Debug, Hash, Eq, PartialEq)]
-#[diesel(table_name = crate::schema::sessions_teachers)]
+#[diesel(table_name = schema::sessions_teachers)]
 pub struct SessionTeacherOwn {
     pub solution_id: i32,
     pub class_id: String,
@@ -115,7 +129,7 @@ pub struct SessionTeacherOwn {
 }
 
 #[derive(Queryable, Selectable, Insertable, Debug, Hash, Eq, PartialEq)]
-#[diesel(table_name = crate::schema::groups)]
+#[diesel(table_name = schema::groups)]
 
 pub struct SolutionGroupOwn {
     pub solution_id: i32,
@@ -123,7 +137,7 @@ pub struct SolutionGroupOwn {
 }
 
 #[derive(Queryable, Selectable, Insertable, Debug, Hash, Eq, PartialEq)]
-#[diesel(table_name = crate::schema::classes_groups)]
+#[diesel(table_name = schema::classes_groups)]
 pub struct ClassGroupOwn {
     pub solution_id: i32,
     pub class_id: String,
@@ -131,7 +145,7 @@ pub struct ClassGroupOwn {
 }
 
 #[derive(Queryable, Selectable, Insertable, Debug, Hash, Eq, PartialEq)]
-#[diesel(table_name = crate::schema::classes_teachers)]
+#[diesel(table_name = schema::classes_teachers)]
 pub struct ClassTeacherOwn {
     pub solution_id: i32,
     pub class_id: String,
@@ -139,7 +153,7 @@ pub struct ClassTeacherOwn {
 }
 
 #[derive(Queryable, Selectable, Insertable, Debug, Hash, Eq, PartialEq)]
-#[diesel(table_name = crate::schema::classes_rooms)]
+#[diesel(table_name = schema::classes_rooms)]
 pub struct ClassRoomOwn {
     pub solution_id: i32,
     pub class_id: String,
