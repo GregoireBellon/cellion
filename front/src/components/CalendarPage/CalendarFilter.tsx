@@ -1,48 +1,80 @@
-import { ExpandMore } from "@mui/icons-material";
 import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  Checkbox,
-  FormControlLabel,
-  FormGroup,
+  Autocomplete,
+  AutocompleteChangeDetails,
+  AutocompleteChangeReason,
+  Chip,
+  TextField,
 } from "@mui/material";
-import { ChangeEvent, FC, useCallback } from "react";
+import { FC, SyntheticEvent, useCallback } from "react";
 
 interface Props {
   title: string;
-  items: { id: string; label: string; checked: boolean }[];
-  onItemChange: (id: string, checked: boolean) => void;
+  options: string[];
+  value: string[];
+  onChange: (newValue: string[]) => void;
+  onClear: () => void;
 }
 
-const CalendarFilter: FC<Props> = ({ title, items, onItemChange }) => {
-  const handleItemChange = useCallback(
-    (id: string) => (e: ChangeEvent<HTMLInputElement>) => {
-      onItemChange(id, e.target.checked);
+const CalendarFilter: FC<Props> = ({
+  title,
+  options,
+  value,
+  onChange,
+  onClear,
+}) => {
+  const handleAutoCompleteChange = useCallback(
+    (
+      _: SyntheticEvent<Element, Event>,
+      __: string[],
+      reason: AutocompleteChangeReason,
+      details?: AutocompleteChangeDetails<string>
+    ) => {
+      if (reason === "clear") {
+        onClear();
+      } else if (details !== undefined) {
+        if (reason === "selectOption") {
+          console.log("selected");
+          onChange([...value, details.option]);
+        } else if (reason === "removeOption") {
+          onChange(value.filter((v) => v !== details.option));
+        }
+      }
     },
-    [onItemChange]
+    [onClear, onChange, value]
   );
 
   return (
-    <Accordion defaultExpanded>
-      <AccordionSummary expandIcon={<ExpandMore />}>{title}</AccordionSummary>
-      <AccordionDetails>
-        <FormGroup>
-          {items.map((item) => (
-            <FormControlLabel
-              key={item.id}
-              control={
-                <Checkbox
-                  checked={item.checked}
-                  onChange={handleItemChange(item.id)}
-                />
-              }
-              label={item.label}
-            />
-          ))}
-        </FormGroup>
-      </AccordionDetails>
-    </Accordion>
+    <Autocomplete
+      multiple
+      autoHighlight
+      blurOnSelect
+      openOnFocus
+      options={options}
+      filterSelectedOptions
+      renderInput={(params) => (
+        <TextField {...params} label={title} size="small" />
+      )}
+      renderTags={(value: string[], getTagProps) =>
+        value.map((option: string, index: number) => (
+          <Chip
+            variant="filled"
+            label={option}
+            {...getTagProps({ index })}
+            key={option}
+          />
+        ))
+      }
+      value={value}
+      onChange={handleAutoCompleteChange}
+      popupIcon={null}
+      limitTags={20}
+      openText="Ouvrir"
+      clearText="Supprimer"
+      closeText="Fermer"
+      loadingText="Chargement..."
+      noOptionsText="Pas d'options"
+      getLimitTagsText={() => "Voir plus"}
+    />
   );
 };
 

@@ -1,58 +1,84 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import axios, { Axios } from "axios";
+import { ISDK } from ".";
 import {
-  CalendarFiltersInfo,
-  CalendarInfo,
-  ReadCalendarBody,
+  SolutionFiltersInfo,
+  SolutionInfo,
+  ReadSolutionBody,
+  ShortSolutionInfo,
 } from "../../types/api";
 
-export class SDKMock {
-  public client: Axios;
-  public constructor() {
-    // TODO setup proxy
-    this.client = axios.create({ baseURL: "http://localhost" });
-  }
-
-  public async getFilters(_id: string): Promise<CalendarFiltersInfo> {
+export class SDKMock implements ISDK {
+  public async getFilters(_id: string): Promise<SolutionFiltersInfo> {
     return {
-      courses: [
-        { id: "1", name: "Maths" },
-        { id: "2", name: "Français" },
-        { id: "3", name: "Histoire" },
-      ],
-      parts: [{ id: "CM", label: "CM" }],
-      groups: [
-        { id: "A", name: "A" },
-        { id: "B", name: "B" },
-      ],
-      rooms: [
-        { id: "1", name: "L203" },
-        { id: "2", name: "L205" },
-      ],
-      teachers: [
-        { name: "Einstein", id: "aa" },
-        { name: "Nash", id: "bb" },
-      ],
+      courses: ["Maths", "Français", "Histoire"],
+      parts: ["CM"],
+      groups: ["A", "B"],
+      rooms: ["L203", "L205"],
+      teachers: ["Einstein", "Nash"],
     };
   }
 
-  public async getCalendar(
-    _id: string,
-    _body: ReadCalendarBody
-  ): Promise<CalendarInfo> {
+  public async getSolution(
+    id: string,
+    _body: ReadSolutionBody
+  ): Promise<SolutionInfo> {
     return {
+      id: id,
       sessions: [
         {
           from: new Date("05/06/2024 09:00"),
           to: new Date("05/06/2024 11:00"),
           id: "1",
-          course: { id: "a", name: "Maths" },
-          groups: [{ id: "M1", name: "M1" }],
-          part: { id: "a", label: "CM" },
-          room: { id: "a", name: "L203" },
-          teacher: { id: "a", name: "Nash" },
+          course: { id: "Maths" },
+          groups: [{ id: "M1" }],
+          part: { id: "CM" },
+          rooms: [{ id: "L001", capacity: 30, label: "Bat, G" }],
+          teachers: [{ id: "Nash" }],
+        },
+        {
+          from: new Date("05/06/2024 11:00"),
+          to: new Date("05/06/2024 12:00"),
+          id: "2",
+          course: { id: "Maths" },
+          groups: [{ id: "M2" }],
+          part: { id: "CM" },
+          rooms: [{ id: "L205", capacity: 30, label: "Bat, G" }],
+          teachers: [{ id: "Nash" }],
+        },
+
+        {
+          from: new Date("05/06/2024 14:00"),
+          to: new Date("05/06/2024 16:00"),
+          id: "3",
+          course: { id: "Francais" },
+          groups: [{ id: "L1" }],
+          part: { id: "CM" },
+          rooms: [{ id: "L203", capacity: 30, label: "Bat, G" }],
+          teachers: [{ id: "Einstein" }],
         },
       ],
+      createdAt: new Date(),
+      fileName: "test",
+    };
+  }
+
+  public async listSolutions(): Promise<ShortSolutionInfo[]> {
+    const instances: ShortSolutionInfo[] = [];
+    for (let i = 0; i < 100; ++i) {
+      instances.push({
+        id: i.toString(),
+        createdAt: new Date(),
+        fileName: `TEST${i}`,
+      });
+    }
+    return instances;
+  }
+
+  public async importSolution(_file: File): Promise<ShortSolutionInfo> {
+    return {
+      id: "35",
+      createdAt: new Date(),
+      fileName: "testImport",
     };
   }
 }

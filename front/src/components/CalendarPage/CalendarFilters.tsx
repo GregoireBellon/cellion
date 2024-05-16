@@ -1,101 +1,135 @@
 import {
   Accordion,
   AccordionDetails,
-  AccordionProps,
   AccordionSummary,
+  Box,
   Typography,
 } from "@mui/material";
 import { FC, useCallback } from "react";
 import CalendarFilter from "./CalendarFilter";
-import { CalendarFiltersInfo } from "../../types/api";
-import { useSearchParams } from "react-router-dom";
 import { ExpandMore } from "@mui/icons-material";
+import { SolutionFiltersInfo } from "../../types/api";
 
 interface Props {
-  calendarFilters: CalendarFiltersInfo;
-  sx?: AccordionProps["sx"];
+  options: SolutionFiltersInfo;
+  value: SolutionFiltersInfo;
+  onChange: (neValue: SolutionFiltersInfo) => void;
 }
 
-const CalendarFilters: FC<Props> = ({ calendarFilters, sx }) => {
-  const [searchParams, setSearchParams] = useSearchParams();
-
-  const handleItemChange = useCallback(
-    (key: string) => (value: string, checked: boolean) => {
-      setSearchParams((old) => {
-        const newSearchParams = new URLSearchParams(old);
-        if (checked) {
-          if (!newSearchParams.has(key, value)) {
-            newSearchParams.append(key, value);
-          }
-        } else {
-          if (newSearchParams.has(key, value)) {
-            newSearchParams.delete(key, value);
-          }
-        }
-        return newSearchParams;
+const CalendarFilters: FC<Props> = ({ options, value, onChange }) => {
+  const handleCoursesChange = useCallback(
+    (newCourses: string[]) => {
+      onChange({
+        ...value,
+        courses: newCourses,
       });
     },
-    [setSearchParams]
+    [value, onChange]
   );
 
-  const isItemChecked = useCallback(
-    (key: string, value: string) => {
-      return searchParams.has(key, value);
+  const handlePartsChange = useCallback(
+    (newParts: string[]) => {
+      onChange({
+        ...value,
+        parts: newParts,
+      });
     },
-    [searchParams]
+    [value, onChange]
   );
+
+  const handleRoomsChange = useCallback(
+    (newRooms: string[]) => {
+      onChange({
+        ...value,
+        rooms: newRooms,
+      });
+    },
+    [value, onChange]
+  );
+
+  const handleGroupsChange = useCallback(
+    (newGroups: string[]) => {
+      onChange({
+        ...value,
+        groups: newGroups,
+      });
+    },
+    [value, onChange]
+  );
+
+  const handleTeachersChange = useCallback(
+    (newTeachers: string[]) => {
+      onChange({
+        ...value,
+        teachers: newTeachers,
+      });
+    },
+    [value, onChange]
+  );
+
+  const handleCoursesClear = useCallback(() => {
+    onChange({ ...value, courses: [] });
+  }, [value, onChange]);
+
+  const handlePartsClear = useCallback(() => {
+    onChange({ ...value, parts: [] });
+  }, [value, onChange]);
+
+  const handleRoomsClear = useCallback(() => {
+    onChange({ ...value, rooms: [] });
+  }, [value, onChange]);
+
+  const handleGroupsClear = useCallback(() => {
+    onChange({ ...value, groups: [] });
+  }, [value, onChange]);
+
+  const handleTeachersClear = useCallback(() => {
+    onChange({ ...value, teachers: [] });
+  }, [value, onChange]);
 
   return (
-    <Accordion defaultExpanded sx={sx}>
+    <Accordion defaultExpanded sx={{ p: 1 }}>
       <AccordionSummary expandIcon={<ExpandMore />}>
         <Typography variant="h4">Filtres</Typography>
       </AccordionSummary>
       <AccordionDetails>
-        <CalendarFilter
-          title="Cours"
-          items={calendarFilters.courses.map((course) => ({
-            id: course.id,
-            label: course.name,
-            checked: isItemChecked("course", course.id),
-          }))}
-          onItemChange={handleItemChange("course")}
-        />
-        <CalendarFilter
-          title="Catégorie"
-          items={calendarFilters.parts.map((part) => ({
-            id: part.id,
-            label: part.label,
-            checked: isItemChecked("part", part.id),
-          }))}
-          onItemChange={handleItemChange("part")}
-        />
-        <CalendarFilter
-          title="Salle"
-          items={calendarFilters.rooms.map((room) => ({
-            id: room.id,
-            label: room.name,
-            checked: isItemChecked("room", room.id),
-          }))}
-          onItemChange={handleItemChange("room")}
-        />
-        <CalendarFilter
-          title="Groupe"
-          items={calendarFilters.groups.map((group) => ({
-            id: group.id,
-            label: group.name,
-            checked: isItemChecked("group", group.id),
-          }))}
-          onItemChange={handleItemChange("group")}
-        />
-        <CalendarFilter
-          title="Enseignant"
-          items={calendarFilters.teachers.map((teacher) => ({
-            id: teacher.id,
-            label: teacher.name,
-            checked: isItemChecked("teacher", teacher.id),
-          }))}
-          onItemChange={handleItemChange("teacher")}
-        />
+        <Box display="flex" flexDirection="column" gap={3}>
+          <CalendarFilter
+            title="Cours"
+            options={options.courses}
+            value={value.courses}
+            onChange={handleCoursesChange}
+            onClear={handleCoursesClear}
+          />
+          <CalendarFilter
+            title="Catégories"
+            options={options.parts}
+            value={value.parts}
+            onChange={handlePartsChange}
+            onClear={handlePartsClear}
+          />
+          <CalendarFilter
+            title="Salles"
+            options={options.rooms}
+            value={value.rooms}
+            onChange={handleRoomsChange}
+            onClear={handleRoomsClear}
+          />
+          <CalendarFilter
+            title="Groupes"
+            options={options.groups}
+            value={value.groups}
+            onChange={handleGroupsChange}
+            onClear={handleGroupsClear}
+          />
+          <CalendarFilter
+            title="Enseignants"
+            options={options.teachers}
+            value={value.teachers}
+            onChange={handleTeachersChange}
+            onClear={handleTeachersClear}
+          />
+        </Box>
       </AccordionDetails>
     </Accordion>
   );

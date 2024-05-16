@@ -1,10 +1,14 @@
-import { FC } from "react";
+import { FC, useCallback, useEffect, useState } from "react";
 
 import { Box, Button, styled } from "@mui/material";
-import { CalendarFiltersInfo } from "../../types/api";
-import CalendarFilters from "./CalendarFilters";
-import CalendarDisplay from "./CalendarDisplay";
+import CalendarDrawerDisplay from "./CalendarDisplay";
 import { Search } from "@mui/icons-material";
+import CalendarSearchDialog from "./CalendarSearchDialog";
+import CalendarDate from "./CalendarDate";
+import { DateTime } from "luxon";
+import CalendarFilters from "./CalendarFilters";
+import { SolutionFiltersInfo } from "../../types/api";
+import { CalendarDisplay } from "../../types/calendar";
 
 const KBM = styled("span", {
   shouldForwardProp: (propName) => propName !== "size",
@@ -22,26 +26,90 @@ const KBM = styled("span", {
   fontSize: size === "small" ? "13px !important" : "1em",
 }));
 interface Props {
-  calendarFilters: CalendarFiltersInfo;
+  date: DateTime | null;
+  onDateChange: (newDate: DateTime | null) => void;
+  filtersOptions: SolutionFiltersInfo;
+  filters: SolutionFiltersInfo;
+  onFiltersChange: (newFilters: SolutionFiltersInfo) => void;
+  display: CalendarDisplay;
+  onDisplayChange: (newDisplay: CalendarDisplay) => void;
 }
 
-const CalendarDrawer: FC<Props> = ({ calendarFilters }) => {
+const CalendarDrawer: FC<Props> = ({
+  date,
+  onDateChange,
+  filtersOptions,
+  filters,
+  onFiltersChange,
+  display,
+  onDisplayChange,
+}) => {
+  const [searchDialogOpen, setSeachDialogOpen] = useState<boolean>(false);
+
+  const handleDateChange = useCallback(
+    (newDate: DateTime | null) => {
+      onDateChange(newDate);
+    },
+    [onDateChange]
+  );
+
+  const handleFiltersChange = useCallback(
+    (newFilters: SolutionFiltersInfo) => {
+      onFiltersChange(newFilters);
+    },
+    [onFiltersChange]
+  );
+
+  const handleDisplayChange = useCallback(
+    (newDisplay: CalendarDisplay) => {
+      onDisplayChange(newDisplay);
+    },
+    [onDisplayChange]
+  );
+
+  const handleSearchButtonClick = useCallback(() => {
+    setSeachDialogOpen(true);
+  }, []);
+
+  const handleSearchDialogClose = useCallback(() => {
+    setSeachDialogOpen(false);
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.key === "k") {
+        event.preventDefault();
+        setSeachDialogOpen(true);
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, []);
+
   return (
     <Box>
+      <CalendarSearchDialog
+        open={searchDialogOpen}
+        onClose={handleSearchDialogClose}
+      />
       <Button
-        variant="outlined"
         startIcon={<Search />}
         endIcon={<KBM size="small">Ctrl+k</KBM>}
-        color="secondary"
         sx={{ textTransform: "none", borderRadius: "10px", mb: 2 }}
         fullWidth
+        onClick={handleSearchButtonClick}
+        disableFocusRipple
       >
-        Chercher un fichier...
+        Rechercher une instance...
       </Button>
-      <CalendarDisplay sx={{ p: 1 }} />
+      <CalendarDate value={date} onChange={handleDateChange} />
+      <CalendarDrawerDisplay value={display} onChange={handleDisplayChange} />
       <CalendarFilters
-        calendarFilters={calendarFilters}
-        sx={{ p: 1, width: 250 }}
+        options={filtersOptions}
+        value={filters}
+        onChange={handleFiltersChange}
       />
     </Box>
   );

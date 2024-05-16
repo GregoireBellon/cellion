@@ -10,19 +10,20 @@ export interface SolutionInfo {
 
 export interface ShortCourseInfo {
   id: string;
-  name: string;
 }
 
-export interface CourseInfo extends ShortCourseInfo {}
+export interface CourseInfo extends ShortCourseInfo {
+  name: string;
+}
 
 // PART
 
 export interface ShortPartInfo {
   id: string;
-  label: string;
 }
 
 export interface PartInfo extends ShortPartInfo {
+  label: string;
   sessionTeachers: number;
   sessionRooms: string;
   sessionLength: number;
@@ -34,10 +35,10 @@ export interface PartInfo extends ShortPartInfo {
 
 export interface ShortTeacherInfo {
   id: string; // id doesnt exists in backend, the backend must send name as id
-  name: string;
 }
 
 export interface TeacherInfo extends ShortTeacherInfo {
+  name: string;
   department: string;
 }
 
@@ -45,10 +46,10 @@ export interface TeacherInfo extends ShortTeacherInfo {
 
 export interface ShortRoomInfo {
   id: string;
-  name: string;
 }
 
 export interface RoomInfo extends ShortRoomInfo {
+  label: string;
   capacity: number;
 }
 
@@ -56,19 +57,21 @@ export interface RoomInfo extends ShortRoomInfo {
 
 export interface ShortStudentInfo {
   id: string;
-  label: string;
 }
 
-export interface StudentInfo extends ShortStudentInfo {}
+export interface StudentInfo extends ShortStudentInfo {
+  label: string;
+}
 
 // GROUP
 
 export interface ShortGroupInfo {
   id: string;
-  name: string;
 }
 
-export interface GroupInfo extends ShortGroupInfo {}
+export interface GroupInfo extends ShortGroupInfo {
+  name: string;
+}
 
 // SESSION
 
@@ -78,9 +81,9 @@ export interface ShortSessionInfo {
   to: Date;
   course: ShortCourseInfo;
   part: ShortPartInfo;
-  room: ShortRoomInfo;
+  rooms: RoomInfo[];
   groups: ShortGroupInfo[];
-  teacher: ShortTeacherInfo;
+  teachers: ShortTeacherInfo[];
 }
 
 export interface SessionInfo {
@@ -89,9 +92,9 @@ export interface SessionInfo {
   to: Date;
   course: CourseInfo;
   part: PartInfo;
-  room: RoomInfo;
+  rooms: RoomInfo[];
   groups: GroupInfo[];
-  teacher: TeacherInfo;
+  teachers: TeacherInfo[];
 
   // TODO
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
