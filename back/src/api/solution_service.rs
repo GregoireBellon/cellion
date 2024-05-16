@@ -1,18 +1,14 @@
-use std::error::Error;
+use std::{error::Error, ops::Deref};
 
 use chrono::{DateTime, Datelike, Local, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc};
-use diesel::{
-    self, BoolExpressionMethods, ExpressionMethods, IntoSql, QueryDsl, QueryResult, RunQueryDsl,
-    SqliteConnection,
-};
-use log::error;
+use diesel::{self, QueryResult, RunQueryDsl, SqliteConnection};
+use log::{debug, error};
 use uuid::Uuid;
 
 use crate::models::{
     db::{
         last_insert_rowid, Class, ClassGroupOwn, ClassRoomOwn, ClassTeacherOwn, Course,
-        InsertSolution, Part, Room, Session, SessionRoomOwn, SessionTeacherOwn, SolutionGroupOwn,
-        Student, StudentGroupOwn, Teacher,
+        InsertSolution, Part, Room, Session, SolutionGroupOwn, Student, StudentGroupOwn, Teacher,
     },
     schema,
 };
@@ -22,6 +18,51 @@ use super::xml_types::{
     XmlSolutionClass, XmlSolutionClassRooms, XmlSolutionClassTeachers, XmlSolutionGroup,
     XmlStudent, XmlTeacher,
 };
+
+fn use_query<F, R>(base_query: &str, buff: &mut Vec<String>, rows_to_insert: &mut i32, f: F) -> R
+where
+    F: FnOnce(String) -> R,
+{
+    let query_nb = buff.len();
+
+    let header = format!("INSERT OR IGNORE INTO {} VALUES ", base_query);
+
+    let capacity_needed = base_query.len()
+        + buff.deref().iter().map(String::len).sum::<usize>()
+        + header.len()
+        + (2 * query_nb);
+
+    let mut query = String::with_capacity(capacity_needed);
+
+    query.push_str(header.as_str());
+
+    for i in 0..query_nb {
+        let buff_element = buff.pop();
+
+        match buff_element {
+            Some(elem) => {
+                *rows_to_insert -= 1;
+                query.push('(');
+                query.push_str(elem.as_str());
+                query.push(')');
+                if i != query_nb - 1 {
+                    query.push(',');
+                }
+            }
+            None => break,
+        }
+    }
+
+    debug!("Request : {}", query);
+    debug!("Capacity expected : {}", capacity_needed);
+    debug!("Capacity needed : {}", query.len());
+
+    let ret = f(query);
+
+    buff.clear();
+
+    return ret;
+}
 
 fn use_buffer<T, F, R>(buff: &mut Vec<T>, rows_to_insert: &mut i32, f: F) -> R
 where
@@ -50,8 +91,8 @@ pub struct SolutionInserter<'a> {
     solution_groups_to_insert: Vec<SolutionGroupOwn>,
     students_groups_to_insert: Vec<StudentGroupOwn>,
     sessions_to_insert: Vec<Session>,
-    sessions_teachers_to_insert: Vec<SessionTeacherOwn>,
-    sessions_rooms_to_insert: Vec<SessionRoomOwn>,
+    sessions_teachers_to_insert_queries: Vec<String>,
+    sessions_rooms_to_insert_queries: Vec<String>,
     classes_groups_to_insert: Vec<ClassGroupOwn>,
     classes_teachers_to_insert: Vec<ClassTeacherOwn>,
     classes_rooms_to_insert: Vec<ClassRoomOwn>,
@@ -81,8 +122,8 @@ impl<'a> SolutionInserter<'a> {
             solution_groups_to_insert: Vec::new(),
             students_groups_to_insert: Vec::new(),
             sessions_to_insert: Vec::new(),
-            sessions_teachers_to_insert: Vec::new(),
-            sessions_rooms_to_insert: Vec::new(),
+            sessions_teachers_to_insert_queries: Vec::new(),
+            sessions_rooms_to_insert_queries: Vec::new(),
             classes_groups_to_insert: Vec::new(),
             classes_teachers_to_insert: Vec::new(),
             classes_rooms_to_insert: Vec::new(),
@@ -182,24 +223,18 @@ impl<'a> SolutionInserter<'a> {
             },
         )?;
 
-        nb_inserted += use_buffer(
-            &mut self.sessions_teachers_to_insert,
+        nb_inserted += use_query(
+            "sessions_teachers(session_id, teacher_id, solution_id)",
+            &mut self.sessions_teachers_to_insert_queries,
             &mut self.rows_to_insert,
-            |b| {
-                diesel::insert_or_ignore_into(schema::sessions_teachers::table)
-                    .values(b)
-                    .execute(self.conn)
-            },
+            |q| diesel::sql_query(q).execute(self.conn),
         )?;
 
-        nb_inserted += use_buffer(
-            &mut self.sessions_rooms_to_insert,
+        nb_inserted += use_query(
+            "sessions_rooms(session_id, room_id, solution_id)",
+            &mut self.sessions_rooms_to_insert_queries,
             &mut self.rows_to_insert,
-            |b| {
-                diesel::insert_or_ignore_into(schema::sessions_rooms::table)
-                    .values(b)
-                    .execute(self.conn)
-            },
+            |q| diesel::sql_query(q).execute(self.conn),
         )?;
 
         nb_inserted += use_buffer(
@@ -291,12 +326,11 @@ impl<'a> SolutionInserter<'a> {
 
         session.teachers.map(|teachs| {
             teachs.teachers_id.into_iter().for_each(|t| {
-                self.sessions_teachers_to_insert.push(SessionTeacherOwn {
-                    class_id: session.class.clone(),
-                    teacher_id: t.ref_id,
-                    session_rank: session.rank,
-                    solution_id: self.solution_id,
-                });
+                self.sessions_teachers_to_insert_queries.push(format!(
+                    r#"
+                        (SELECT id from sessions WHERE rank = {} AND class_id = "{}" AND solution_id = {}), "{}", "{}"
+                    "#, session.rank, session.class.clone(), self.solution_id, t.ref_id, self.solution_id
+                ));
 
                 self.on_add_callback();
             })
@@ -304,12 +338,11 @@ impl<'a> SolutionInserter<'a> {
 
         session.rooms.map(|s_rooms| {
             s_rooms.rooms_id.into_iter().for_each(|r| {
-                self.sessions_rooms_to_insert.push(SessionRoomOwn {
-                    solution_id: self.solution_id,
-                    class_id: session.class.clone(),
-                    session_rank: session.rank,
-                    room_id: r.ref_id,
-                });
+                self.sessions_rooms_to_insert_queries.push(format!(
+                    r#"
+                        (SELECT id from sessions WHERE rank = {} AND class_id = "{}" AND solution_id = {}), "{}", "{}"
+                    "#, session.rank, session.class.clone(), self.solution_id, r.ref_id, self.solution_id
+                ));
 
                 self.on_add_callback();
             })

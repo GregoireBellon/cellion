@@ -1,3 +1,5 @@
+use std::collections::{HashMap, HashSet};
+
 use chrono::NaiveDateTime;
 use diesel::{
     result::Error as DieselError, BoolExpressionMethods, ExpressionMethods, JoinOnDsl, QueryDsl,
@@ -6,7 +8,54 @@ use diesel::{
 
 use crate::models::schema;
 
-use super::solutions_dto::{ShortCourseInfo, ShortPartInfo, ShortSessionInfo};
+use super::solutions_dto::{
+    ShortCourseInfo, ShortGroupInfo, ShortPartInfo, ShortRoomInfo, ShortSessionInfo,
+    ShortTeacherInfo,
+};
+
+struct ShortSessionInfoMap {
+    pub id: String,
+    pub from: NaiveDateTime,
+    pub to: NaiveDateTime,
+    pub course: ShortCourseInfo,
+    pub part: ShortPartInfo,
+    pub rooms: HashSet<ShortRoomInfo>,
+    pub groups: HashSet<ShortGroupInfo>,
+    pub teachers: HashSet<ShortTeacherInfo>,
+}
+
+impl From<(String, NaiveDateTime, String, String, i32)> for ShortSessionInfoMap {
+    fn from(value: (String, NaiveDateTime, String, String, i32)) -> Self {
+        ShortSessionInfoMap {
+            id: value.0,
+            from: value.1,
+            to: value
+                .1
+                .checked_add_signed(chrono::Duration::minutes(value.4 as i64))
+                .unwrap(),
+            course: ShortCourseInfo { id: value.2 },
+            part: ShortPartInfo { id: value.3 },
+            rooms: HashSet::new(),
+            groups: HashSet::new(),
+            teachers: HashSet::new(),
+        }
+    }
+}
+
+impl Into<ShortSessionInfo> for ShortSessionInfoMap {
+    fn into(self) -> ShortSessionInfo {
+        ShortSessionInfo {
+            id: self.id,
+            from: self.from,
+            to: self.to,
+            course: self.course,
+            part: self.part,
+            rooms: Vec::from_iter(self.rooms.into_iter()),
+            groups: Vec::from_iter(self.groups.into_iter()),
+            teachers: Vec::from_iter(self.teachers.into_iter()),
+        }
+    }
+}
 
 pub fn get_sessions_with_filters(
     conn: &mut SqliteConnection,
@@ -36,10 +85,8 @@ pub fn get_sessions_with_filters(
                 .and(schema::parts::solution_id.eq(schema::courses::solution_id))),
         )
         .inner_join(
-            schema::sessions_rooms::table.on(schema::sessions_rooms::session_rank
-                .eq(schema::sessions::rank)
-                .and(schema::sessions_rooms::solution_id.eq(schema::sessions::solution_id))
-                .and(schema::sessions_rooms::class_id.eq(schema::sessions::class_id))),
+            schema::sessions_rooms::table
+                .on(schema::sessions_rooms::session_id.eq(schema::sessions::id)),
         )
         .inner_join(
             schema::rooms::table.on(schema::sessions_rooms::room_id
@@ -47,10 +94,8 @@ pub fn get_sessions_with_filters(
                 .and(schema::sessions_rooms::solution_id.eq(schema::rooms::solution_id))),
         )
         .inner_join(
-            schema::sessions_teachers::table.on(schema::sessions_teachers::session_rank
-                .eq(schema::sessions::rank)
-                .and(schema::sessions_teachers::solution_id.eq(schema::sessions::solution_id))
-                .and(schema::sessions_teachers::class_id.eq(schema::sessions::class_id))),
+            schema::sessions_teachers::table
+                .on(schema::sessions_teachers::session_id.eq(schema::sessions::id)),
         )
         .inner_join(
             schema::teachers::table.on(schema::sessions_teachers::teacher_id
@@ -84,28 +129,46 @@ pub fn get_sessions_with_filters(
     if !groups_id.is_empty() {
         query = query.filter(schema::groups::id.eq_any(groups_id));
     }
+    let mut sessions_map: HashMap<i32, ShortSessionInfoMap> = HashMap::new();
 
-    let sessions_return: Vec<(String, NaiveDateTime, String, String, i32)> = query
+    query
         .select((
+            schema::sessions::id,
             schema::sessions::uuid,
             schema::sessions::starting_date,
             schema::courses::id,
             schema::parts::id,
             schema::parts::session_length,
+            schema::rooms::id,
+            schema::groups::id,
+            schema::teachers::name,
         ))
-        .load::<(String, NaiveDateTime, String, String, i32)>(conn)?;
-
-    return Ok(sessions_return
+        .load::<(
+            i32,
+            String,
+            NaiveDateTime,
+            String,
+            String,
+            i32,
+            String,
+            String,
+            String,
+        )>(conn)?
         .into_iter()
-        .map(|elem| ShortSessionInfo {
-            id: elem.0,
-            from: elem.1,
-            to: elem
-                .1
-                .checked_add_signed(chrono::Duration::minutes(elem.4 as i64))
-                .unwrap(),
-            course: ShortCourseInfo { id: elem.2 },
-            part: ShortPartInfo { id: elem.3 },
-        })
-        .collect());
+        .for_each(|sess| {
+            let entry = sessions_map
+                .entry(sess.0)
+                .or_insert(ShortSessionInfoMap::from((
+                    sess.1, sess.2, sess.3, sess.4, sess.5,
+                )));
+
+            entry.rooms.insert(ShortRoomInfo { id: sess.6 });
+            entry.groups.insert(ShortGroupInfo { id: sess.7 });
+            entry.teachers.insert(ShortTeacherInfo { id: sess.8 });
+        });
+
+    return Ok(sessions_map
+        .into_values()
+        .map(ShortSessionInfoMap::into)
+        .collect::<Vec<ShortSessionInfo>>());
 }

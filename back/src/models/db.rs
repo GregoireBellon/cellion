@@ -29,10 +29,8 @@ pub struct Teacher {
 #[derive(Queryable, Selectable)]
 #[diesel(table_name = schema::sessions_rooms)]
 pub struct SessionRoom {
+    pub session_id: i32,
     pub solution_id: i32,
-    pub class_id: String,
-
-    pub session_rank: i32,
     pub room_id: String,
 }
 
@@ -112,19 +110,18 @@ pub struct Session {
 
 #[derive(Queryable, Selectable, Insertable, Debug, Hash, Eq, PartialEq)]
 #[diesel(table_name = schema::sessions_rooms)]
+#[diesel(belongs_to(schema::sessions))]
 pub struct SessionRoomOwn {
-    pub solution_id: i32,
-    pub class_id: String,
-    pub session_rank: i32,
+    pub session_id: i32,
     pub room_id: String,
+    pub solution_id: i32,
 }
 
 #[derive(Queryable, Selectable, Insertable, Debug, Hash, Eq, PartialEq)]
 #[diesel(table_name = schema::sessions_teachers)]
 pub struct SessionTeacherOwn {
+    pub session_id: i32,
     pub solution_id: i32,
-    pub class_id: String,
-    pub session_rank: i32,
     pub teacher_id: String,
 }
 
