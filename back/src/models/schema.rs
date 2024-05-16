@@ -71,7 +71,8 @@ diesel::table! {
 }
 
 diesel::table! {
-    sessions (solution_id, class_id, rank) {
+    sessions (id) {
+        id -> Integer,
         solution_id -> Integer,
         uuid -> Text,
         class_id -> Text,
@@ -81,20 +82,18 @@ diesel::table! {
 }
 
 diesel::table! {
-    sessions_rooms (solution_id, class_id, session_rank, room_id) {
-        solution_id -> Integer,
-        class_id -> Text,
-        session_rank -> Integer,
+    sessions_rooms (session_id, room_id, solution_id) {
+        session_id -> Integer,
         room_id -> Text,
+        solution_id -> Integer,
     }
 }
 
 diesel::table! {
-    sessions_teachers (solution_id, class_id, session_rank, teacher_id) {
-        solution_id -> Integer,
-        class_id -> Text,
-        session_rank -> Integer,
+    sessions_teachers (session_id, teacher_id, solution_id) {
+        session_id -> Integer,
         teacher_id -> Text,
+        solution_id -> Integer,
     }
 }
 
@@ -139,6 +138,8 @@ diesel::joinable!(groups -> solutions (solution_id));
 diesel::joinable!(parts -> solutions (solution_id));
 diesel::joinable!(rooms -> solutions (solution_id));
 diesel::joinable!(sessions -> solutions (solution_id));
+diesel::joinable!(sessions_rooms -> sessions (session_id));
+diesel::joinable!(sessions_teachers -> sessions (session_id));
 diesel::joinable!(sessions_teachers -> solutions (solution_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
