@@ -15,15 +15,15 @@ import {
 } from "@mui/material";
 import { FC, useCallback } from "react";
 import {
-  CalendarDisplay,
+  CalendarDisplaySettings,
   ColorMode,
   ViewLevel,
   ViewMode,
-} from "../../types/calendar";
+} from "../../../types/calendar";
 
 interface Props {
-  value: CalendarDisplay;
-  onChange: (newValue: CalendarDisplay) => void;
+  value: CalendarDisplaySettings;
+  onChange: (newValue: CalendarDisplaySettings) => void;
 }
 
 const CalendarDrawerDisplay: FC<Props> = ({ value, onChange }) => {

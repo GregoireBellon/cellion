@@ -36,7 +36,7 @@ export type CalendarFilterSearchParams =
   | CalendarSearchParams.TEACHER
   | CalendarSearchParams.GROUP;
 
-export interface CalendarDisplay {
+export interface CalendarDisplaySettings {
   viewMode: ViewMode;
   colorMode: ColorMode;
   viewLevel: ViewLevel;

@@ -20,6 +20,7 @@ import { ShortSolutionInfo } from "../../types/api";
 import sdk from "../../utils/sdk";
 import { Search } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 interface Props {
   open: boolean;
@@ -29,7 +30,7 @@ interface Props {
 const CalendarSearchDialog: FC<Props> = ({ open, onClose }) => {
   const navigate = useNavigate();
 
-  const [instances, setInstances] = useState<ShortSolutionInfo[]>([]);
+  const [solutions, setSolutions] = useState<ShortSolutionInfo[]>([]);
   const [autoCompleteInput, setAutoCompleteInput] = useState<string>("");
   const [autoCompleteValue, setAutoCompleteValue] = useState<
     ShortSolutionInfo | undefined
@@ -78,11 +79,13 @@ const CalendarSearchDialog: FC<Props> = ({ open, onClose }) => {
     [handleClose]
   );
 
-  const fetchInstances = useCallback(async () => {
+  const fetchSolutions = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await sdk.listSolutions();
-      setInstances(data);
+      const data = await toast.promise(sdk.listSolutions(), {
+        error: "Impossible de récupérer les solutions",
+      });
+      setSolutions(data);
     } catch (err) {
       console.error((err as Error).message);
     }
@@ -91,9 +94,9 @@ const CalendarSearchDialog: FC<Props> = ({ open, onClose }) => {
 
   useEffect(() => {
     if (open) {
-      void fetchInstances();
+      void fetchSolutions();
     }
-  }, [fetchInstances, open]);
+  }, [fetchSolutions, open]);
 
   useEffect(() => {
     // https://github.com/mui/material-ui/issues/33004
@@ -117,12 +120,12 @@ const CalendarSearchDialog: FC<Props> = ({ open, onClose }) => {
       onClose={handleClose}
       PaperProps={{ sx: { position: "absolute", top: 50 } }}
     >
-      <DialogTitle>Rechercher une instance</DialogTitle>
+      <DialogTitle>Rechercher une solution</DialogTitle>
       <DialogContent>
         <Autocomplete
           freeSolo
           disableClearable
-          options={instances}
+          options={solutions}
           fullWidth
           size="medium"
           autoHighlight
@@ -143,7 +146,7 @@ const CalendarSearchDialog: FC<Props> = ({ open, onClose }) => {
               {...params}
               InputProps={{
                 ...params.InputProps,
-                placeholder: "Rechercher une instance",
+                placeholder: "Rechercher une solution",
                 type: "search",
                 startAdornment: <Search />,
               }}

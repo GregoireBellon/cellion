@@ -7,15 +7,15 @@ import {
   useRef,
   useState,
 } from "react";
-import CalendarDrawer from "./CalendarDrawer";
-import Calendar from "./Calendar";
-import { Box, styled } from "@mui/material";
+import CalendarDrawer from "./CalendarPageDrawer/CalendarDrawer";
+import Calendar from "./CalendarPageBody/Calendar";
+import { Box } from "@mui/material";
 import FullCalendar from "@fullcalendar/react";
-import { useNavigate, useParams, useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import sdk from "../../utils/sdk";
 import { SolutionFiltersInfo, ReadSolutionBody } from "../../types/api";
 import {
-  CalendarDisplay,
+  CalendarDisplaySettings,
   CalendarSearchParams,
   ColorMode,
   ViewLevel,
@@ -23,28 +23,21 @@ import {
 } from "../../types/calendar";
 import CalendarSpeedDial from "./CalendarSpeedDial";
 import { stringify } from "csv-stringify/browser/esm/sync";
-import CalendarHeaderToolbar from "./CalendarHeaderToolbar";
+import CalendarHeaderToolbar from "./CalendarPageBody/CalendarHeaderToolbar";
 import { DateTime, Interval } from "luxon";
 import { ShortSessionInfo } from "../../types/core";
+import { toast } from "react-toastify";
+import { VisuallyHiddenInput } from "../VisuallyHiddenInput";
 
-const VisuallyHiddenInput = styled("input")({
-  clip: "rect(0 0 0 0)",
-  clipPath: "inset(50%)",
-  height: 1,
-  overflow: "hidden",
-  position: "absolute",
-  bottom: 0,
-  left: 0,
-  whiteSpace: "nowrap",
-  width: 1,
-});
+interface Props {
+  solutionId: string;
+}
 
-const CalendarPage: FC = () => {
-  const { fileId } = useParams<"fileId">();
+const CalendarPage: FC<Props> = ({ solutionId }) => {
   const navigate = useNavigate();
 
   const fullCalendarRef = useRef<FullCalendar | null>(null);
-  const instanceDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const solutionDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hiddenInputRef = useRef<HTMLInputElement | null>(null);
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -68,8 +61,8 @@ const CalendarPage: FC = () => {
     })
   );
 
-  const [calendarDisplay, setCalendarDisplay] = useState<CalendarDisplay>(
-    () => ({
+  const [calendarDisplay, setCalendarDisplay] =
+    useState<CalendarDisplaySettings>(() => ({
       viewMode:
         (searchParams.get(CalendarSearchParams.VIEW_MODE) as ViewMode) ??
         ViewMode.DEFAULT,
@@ -79,8 +72,7 @@ const CalendarPage: FC = () => {
       colorMode:
         (searchParams.get(CalendarSearchParams.COLOR_MODE) as ColorMode) ??
         ColorMode.BY_PART,
-    })
-  );
+    }));
 
   const [from, setFrom] = useState<DateTime>(() => {
     const searchParamsFrom = searchParams.get(CalendarSearchParams.FROM);
@@ -123,14 +115,16 @@ const CalendarPage: FC = () => {
   );
 
   const handleDisplayChange = useCallback(
-    (newCalendarDisplay: CalendarDisplay) =>
+    (newCalendarDisplay: CalendarDisplaySettings) =>
       setCalendarDisplay(newCalendarDisplay),
     []
   );
 
   const fetchFilters = useCallback(async (id: string) => {
     try {
-      const filters = await sdk.getFilters(id);
+      const filters = await toast.promise(sdk.getFilters(id), {
+        error: "Impossible de charger les filtres",
+      });
       setSolutionFiltersOptions(filters);
       setSolutionFilters({
         courses: [],
@@ -144,15 +138,17 @@ const CalendarPage: FC = () => {
     }
   }, []);
 
-  const fetchInstance = useCallback((id: string, body: ReadSolutionBody) => {
-    if (instanceDebounce.current !== null) {
-      clearTimeout(instanceDebounce.current);
+  const fetchSolution = useCallback((id: string, body: ReadSolutionBody) => {
+    if (solutionDebounce.current !== null) {
+      clearTimeout(solutionDebounce.current);
     }
-    instanceDebounce.current = setTimeout(async () => {
+    solutionDebounce.current = setTimeout(async () => {
       setCalendarLoading(true);
       try {
-        const newInstance = await sdk.getSolution(id, body);
-        setSessions(newInstance);
+        const newSolution = await toast.promise(sdk.getSolution(id, body), {
+          error: "Impossible de charger la solution",
+        });
+        setSessions(newSolution);
       } catch (err) {
         console.error((err as Error).message);
       }
@@ -221,18 +217,23 @@ const CalendarPage: FC = () => {
     URL.revokeObjectURL(href);
   }, [sessions]);
 
-  const handleImportInstanceClick = useCallback(() => {
+  const handleImportSolutionClick = useCallback(() => {
     hiddenInputRef.current?.click();
   }, []);
 
-  const handleImportInstance = useCallback(
+  const handleImportSolution = useCallback(
     async (e: ChangeEvent<HTMLInputElement>) => {
       if (e.target.files === null) {
         return;
       }
-      const file = e.target.files[0];
       try {
-        const data = await sdk.importSolution(file);
+        const file = e.target.files[0];
+        const data = await toast.promise(sdk.importSolution(file), {
+          pending: "Import de la solution...",
+          error: "Echec de l'import de la solution",
+          success: "🚀 Solution importée avec succès !",
+        });
+
         navigate(`/calendar/${data.id}`);
       } catch (err) {
         console.error((err as Error).message);
@@ -305,14 +306,14 @@ const CalendarPage: FC = () => {
   }, [from, setSearchParams, solutionFilters, to, calendarDisplay]);
 
   useEffect(() => {
-    if (fileId === undefined) {
+    if (solutionId === undefined) {
       return;
     }
-    void fetchFilters(fileId);
-  }, [fetchFilters, fileId]);
+    void fetchFilters(solutionId);
+  }, [fetchFilters, solutionId]);
 
   useEffect(() => {
-    if (fileId === undefined) {
+    if (solutionId === undefined) {
       return;
     }
     const isoFrom = from?.toISO();
@@ -320,8 +321,8 @@ const CalendarPage: FC = () => {
     if (!isoFrom || !isoTo) {
       return;
     }
-    fetchInstance(fileId, { ...solutionFilters, from: isoFrom, to: isoTo });
-  }, [fetchInstance, fileId, from, solutionFilters, to]);
+    fetchSolution(solutionId, { ...solutionFilters, from: isoFrom, to: isoTo });
+  }, [fetchSolution, solutionId, from, solutionFilters, to]);
 
   return (
     <>
@@ -357,11 +358,11 @@ const CalendarPage: FC = () => {
       <CalendarSpeedDial
         onExportJSONClick={handleExportJSONClick}
         onExportCSVClick={handleExportCSVClick}
-        onImportInstanceClick={handleImportInstanceClick}
+        onImportSolutionClick={handleImportSolutionClick}
       />
       <VisuallyHiddenInput
         ref={hiddenInputRef}
-        onChange={handleImportInstance}
+        onChange={handleImportSolution}
         type="file"
         accept=".xml"
       />

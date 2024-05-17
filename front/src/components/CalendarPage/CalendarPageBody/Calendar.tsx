@@ -17,13 +17,13 @@ import {
   EventClickArg,
   EventSourceInput,
 } from "@fullcalendar/core/index.js";
-import { CalendarDisplay } from "../../types/calendar";
-import { getColorBySessionId } from "../../utils/colors";
+import { CalendarDisplaySettings } from "../../../types/calendar";
+import { getColorBySessionId } from "../../../utils/colors";
 import {
   FullCalendarViewName,
   getFullCalendarViewName,
-} from "../../utils/dates";
-import { ShortSessionInfo } from "../../types/core";
+} from "../../../utils/dates";
+import { ShortSessionInfo } from "../../../types/core";
 import { LinearProgress, Popover } from "@mui/material";
 
 interface Props {
@@ -31,7 +31,7 @@ interface Props {
   fullCalendarRef: MutableRefObject<FullCalendar | null>;
   sessions: ShortSessionInfo[];
   initialFrom: Date;
-  display: CalendarDisplay;
+  display: CalendarDisplaySettings;
   loading: boolean;
 }
 

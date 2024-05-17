@@ -6,8 +6,8 @@ import {
   Navigate,
   RouterProvider,
 } from "react-router-dom";
-import CalendarPage from "./components/CalendarPage/CalendarPage.tsx";
 import FilesPage from "./components/FilesPage.tsx";
+import CalendarHome from "./components/CalendarPage/CalendarHome.tsx";
 
 const router = createBrowserRouter([
   {
@@ -17,11 +17,11 @@ const router = createBrowserRouter([
       { path: "", element: <Navigate replace to="calendar" /> },
       {
         path: "calendar",
-        element: <CalendarPage />,
+        element: <CalendarHome />,
       },
       {
-        path: "calendar/:fileId",
-        element: <CalendarPage />,
+        path: "calendar/:solutionId",
+        element: <CalendarHome />,
       },
       {
         path: "files",

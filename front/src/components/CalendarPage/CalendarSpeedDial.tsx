@@ -10,13 +10,13 @@ import { FC, useCallback, useState } from "react";
 interface Props {
   onExportJSONClick: () => void;
   onExportCSVClick: () => void;
-  onImportInstanceClick: () => void;
+  onImportSolutionClick: () => void;
 }
 
 const CalendarSpeedDial: FC<Props> = ({
   onExportJSONClick,
   onExportCSVClick,
-  onImportInstanceClick,
+  onImportSolutionClick,
 }) => {
   const [open, setOpen] = useState<boolean>(false);
 
@@ -38,10 +38,10 @@ const CalendarSpeedDial: FC<Props> = ({
     onExportCSVClick();
   }, [onExportCSVClick]);
 
-  const handleImportInstanceClick = useCallback(() => {
+  const handleImportSolutionClick = useCallback(() => {
     setOpen(false);
-    onImportInstanceClick();
-  }, [onImportInstanceClick]);
+    onImportSolutionClick();
+  }, [onImportSolutionClick]);
 
   return (
     <SpeedDial
@@ -79,8 +79,8 @@ const CalendarSpeedDial: FC<Props> = ({
       />
       <SpeedDialAction
         icon={<CalendarMonth />}
-        tooltipTitle="Importer une instance"
-        onClick={handleImportInstanceClick}
+        tooltipTitle="Importer une solution"
+        onClick={handleImportSolutionClick}
       />
     </SpeedDial>
   );

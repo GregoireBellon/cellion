@@ -8,7 +8,7 @@ import {
 import { FC, useCallback } from "react";
 import CalendarFilter from "./CalendarFilter";
 import { ExpandMore } from "@mui/icons-material";
-import { SolutionFiltersInfo } from "../../types/api";
+import { SolutionFiltersInfo } from "../../../types/api";
 
 interface Props {
   options: SolutionFiltersInfo;

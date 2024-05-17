@@ -58,15 +58,15 @@ export class SDKMock implements ISDK {
   }
 
   public async listSolutions(): Promise<ShortSolutionInfo[]> {
-    const instances: ShortSolutionInfo[] = [];
+    const solutions: ShortSolutionInfo[] = [];
     for (let i = 0; i < 100; ++i) {
-      instances.push({
+      solutions.push({
         id: i.toString(),
         createdAt: new Date(),
         fileName: `TEST${i}`,
       });
     }
-    return instances;
+    return solutions;
   }
 
   public async importSolution(_file: File): Promise<ShortSolutionInfo> {
