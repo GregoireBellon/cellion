@@ -28,7 +28,7 @@ async fn main() -> std::io::Result<()> {
             .service(hello)
             .service(api::get_scope())
     })
-    .bind(("0.0.0.0", 8080))?
+    .bind(("0.0.0.0", 5000))?
     .run()
     .await
 }

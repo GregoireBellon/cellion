@@ -13,11 +13,7 @@ import { Box, styled } from "@mui/material";
 import FullCalendar from "@fullcalendar/react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import sdk from "../../utils/sdk";
-import {
-  SolutionFiltersInfo,
-  SolutionInfo,
-  ReadSolutionBody,
-} from "../../types/api";
+import { SolutionFiltersInfo, ReadSolutionBody } from "../../types/api";
 import {
   CalendarDisplay,
   CalendarSearchParams,
@@ -29,6 +25,7 @@ import CalendarSpeedDial from "./CalendarSpeedDial";
 import { stringify } from "csv-stringify/browser/esm/sync";
 import CalendarHeaderToolbar from "./CalendarHeaderToolbar";
 import { DateTime, Interval } from "luxon";
+import { ShortSessionInfo } from "../../types/core";
 
 const VisuallyHiddenInput = styled("input")({
   clip: "rect(0 0 0 0)",
@@ -51,12 +48,7 @@ const CalendarPage: FC = () => {
   const hiddenInputRef = useRef<HTMLInputElement | null>(null);
 
   const [searchParams, setSearchParams] = useSearchParams();
-  const [solution, setSolution] = useState<SolutionInfo>({
-    id: "1",
-    sessions: [],
-    fileName: "",
-    createdAt: new Date(),
-  });
+  const [sessions, setSessions] = useState<ShortSessionInfo[]>([]);
   const [solutionFiltersOptions, setSolutionFiltersOptions] =
     useState<SolutionFiltersInfo>({
       courses: [],
@@ -106,6 +98,8 @@ const CalendarPage: FC = () => {
     return DateTime.fromMillis(Number.parseInt(searchParamsTo));
   });
 
+  const [calendarLoading, setCalendarLoading] = useState<boolean>(false);
+
   const initialFullCalendarDate = useMemo(
     () => (from.isValid ? from.toJSDate() : new Date()),
     [from]
@@ -138,6 +132,13 @@ const CalendarPage: FC = () => {
     try {
       const filters = await sdk.getFilters(id);
       setSolutionFiltersOptions(filters);
+      setSolutionFilters({
+        courses: [],
+        groups: [],
+        parts: [],
+        rooms: [],
+        teachers: [],
+      });
     } catch (err) {
       console.error((err as Error).message);
     }
@@ -148,12 +149,14 @@ const CalendarPage: FC = () => {
       clearTimeout(instanceDebounce.current);
     }
     instanceDebounce.current = setTimeout(async () => {
+      setCalendarLoading(true);
       try {
         const newInstance = await sdk.getSolution(id, body);
-        setSolution(newInstance);
+        setSessions(newInstance);
       } catch (err) {
         console.error((err as Error).message);
       }
+      setCalendarLoading(false);
     }, 50);
   }, []);
 
@@ -166,8 +169,8 @@ const CalendarPage: FC = () => {
   }, []);
 
   const handleExportJSONClick = useCallback(() => {
-    const fileName = solution.fileName;
-    const json = JSON.stringify(solution.sessions, null, 2);
+    const fileName = "export";
+    const json = JSON.stringify(sessions, null, 2);
     const blob = new Blob([json], { type: "application/json" });
     const href = URL.createObjectURL(blob);
 
@@ -179,12 +182,12 @@ const CalendarPage: FC = () => {
 
     document.body.removeChild(link);
     URL.revokeObjectURL(href);
-  }, [solution.fileName, solution.sessions]);
+  }, [sessions]);
 
   const handleExportCSVClick = useCallback(() => {
-    const fileName = solution.fileName;
+    const fileName = "export";
     const csv = stringify(
-      solution.sessions.map((s) => ({
+      sessions.map((s) => ({
         ...s,
         from: s.from.toISOString(),
         to: s.to.toISOString(),
@@ -216,7 +219,7 @@ const CalendarPage: FC = () => {
 
     document.body.removeChild(link);
     URL.revokeObjectURL(href);
-  }, [solution.fileName, solution.sessions]);
+  }, [sessions]);
 
   const handleImportInstanceClick = useCallback(() => {
     hiddenInputRef.current?.click();
@@ -341,11 +344,12 @@ const CalendarPage: FC = () => {
               interval={intervalStr}
             />
             <Calendar
-              instance={solution}
+              sessions={sessions}
               fullCalendarRef={fullCalendarRef}
               initialFrom={initialFullCalendarDate}
               onDatesSet={handleFullCalendarDatesSet}
               display={calendarDisplay}
+              loading={calendarLoading}
             />
           </Box>
         </Box>

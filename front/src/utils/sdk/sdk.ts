@@ -1,11 +1,11 @@
 import axios, { Axios } from "axios";
 import {
   SolutionFiltersInfo,
-  SolutionInfo,
   ReadSolutionBody,
   ShortSolutionInfo,
 } from "../../types/api";
 import { ISDK } from ".";
+import { ShortSessionInfo } from "../../types/core";
 
 export class SDK implements ISDK {
   private client: Axios;
@@ -22,15 +22,21 @@ export class SDK implements ISDK {
   }
 
   public async listSolutions(): Promise<ShortSolutionInfo[]> {
-    const { data } = await this.client.get<ShortSolutionInfo[]>(`/solutions`);
-    return data;
+    const { data } = await this.client.get<
+      { id: number; filename: string; created_at: string }[]
+    >(`/solutions`);
+    return data.map((d) => ({
+      id: d.id.toString(),
+      createdAt: new Date(d.created_at),
+      fileName: d.filename,
+    }));
   }
 
   public async getSolution(
     id: string,
     body: ReadSolutionBody
-  ): Promise<SolutionInfo> {
-    const { data } = await this.client.post<SolutionInfo>(
+  ): Promise<ShortSessionInfo[]> {
+    const { data } = await this.client.post<ShortSessionInfo[]>(
       `/solutions/${id}/query`,
       body
     );
@@ -40,7 +46,7 @@ export class SDK implements ISDK {
   public async importSolution(file: File): Promise<ShortSolutionInfo> {
     const { data } = await this.client.postForm<ShortSolutionInfo>(
       "/solutions",
-      { file }
+      { solution: file }
     );
     return data;
   }

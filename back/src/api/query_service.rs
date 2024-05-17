@@ -63,6 +63,8 @@ impl Into<ShortSessionInfo> for ShortSessionInfoMap {
 pub fn get_sessions_with_filters(
     conn: &mut SqliteConnection,
     query_solution_id: i32,
+    from: Option<NaiveDateTime>,
+    to: Option<NaiveDateTime>,
     courses_id: Vec<String>,
     parts_id: Vec<String>,
     teachers_id: Vec<String>,
@@ -116,6 +118,10 @@ pub fn get_sessions_with_filters(
                 .and(schema::classes_groups::solution_id.eq(schema::groups::solution_id))),
         )
         .into_boxed();
+
+    if let (Some(sql_from), Some(sql_to)) = (from, to) {
+        query = query.filter(schema::sessions::starting_date.between(sql_from, sql_to));
+    }
 
     if !teachers_id.is_empty() {
         query = query.filter(schema::teachers::name.eq_any(&teachers_id));

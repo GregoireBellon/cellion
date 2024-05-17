@@ -1,4 +1,3 @@
-import { DateView } from "@mui/x-date-pickers";
 import { ViewLevel, ViewMode } from "../types/calendar";
 
 export type FullCalendarViewName =
@@ -30,14 +29,4 @@ export function getFullCalendarViewName(
   viewLevel: ViewLevel
 ): FullCalendarViewName {
   return fullCalendarViewDict[viewMode][viewLevel];
-}
-
-const datePickerViewDict: Record<ViewLevel, DateView[]> = {
-  [ViewLevel.DAY]: ["day", "month", "year"],
-  [ViewLevel.WEEK]: ["day", "month", "year"],
-  [ViewLevel.MONTH]: ["month", "year"],
-};
-
-export function getDatePickerViews(viewLevel: ViewLevel) {
-  return datePickerViewDict[viewLevel];
 }

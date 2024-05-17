@@ -18,6 +18,7 @@
     "@fullcalendar/react": "6.1.11",
     "@fullcalendar/resource-timeline": "6.1.11",
     "@fullcalendar/timegrid": "6.1.11",
+    "@fullcalendar/resource": "6.1.11",
     "@mui/icons-material": "5.15.16",
     "@mui/material": "5.15.16",
     "@mui/x-date-pickers": "7.4.0",

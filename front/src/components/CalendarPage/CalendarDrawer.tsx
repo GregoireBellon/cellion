@@ -89,7 +89,7 @@ const CalendarDrawer: FC<Props> = ({
   }, []);
 
   return (
-    <Box>
+    <Box display="flex" flexDirection="column" flexGrow={1} minWidth={360}>
       <CalendarSearchDialog
         open={searchDialogOpen}
         onClose={handleSearchDialogClose}
@@ -104,7 +104,7 @@ const CalendarDrawer: FC<Props> = ({
       >
         Rechercher une instance...
       </Button>
-      <CalendarDate value={date} onChange={handleDateChange} />
+      {/* <CalendarDate value={date} onChange={handleDateChange} /> */}
       <CalendarDrawerDisplay value={display} onChange={handleDisplayChange} />
       <CalendarFilters
         options={filtersOptions}

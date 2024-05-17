@@ -33,7 +33,6 @@ const CalendarFilter: FC<Props> = ({
         onClear();
       } else if (details !== undefined) {
         if (reason === "selectOption") {
-          console.log("selected");
           onChange([...value, details.option]);
         } else if (reason === "removeOption") {
           onChange(value.filter((v) => v !== details.option));
