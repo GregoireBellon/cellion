@@ -118,19 +118,19 @@ pub fn get_sessions_with_filters(
         .into_boxed();
 
     if !teachers_id.is_empty() {
-        query = query.filter(schema::teachers::name.eq_any(teachers_id));
+        query = query.filter(schema::teachers::name.eq_any(&teachers_id));
     }
     if !courses_id.is_empty() {
-        query = query.filter(schema::courses::id.eq_any(courses_id));
+        query = query.filter(schema::courses::id.eq_any(&courses_id));
     }
     if !parts_id.is_empty() {
-        query = query.filter(schema::parts::id.eq_any(parts_id));
+        query = query.filter(schema::parts::id.eq_any(&parts_id));
     }
     if !rooms_id.is_empty() {
-        query = query.filter(schema::rooms::id.eq_any(rooms_id));
+        query = query.filter(schema::rooms::id.eq_any(&rooms_id));
     }
     if !groups_id.is_empty() {
-        query = query.filter(schema::groups::id.eq_any(groups_id));
+        query = query.filter(schema::groups::id.eq_any(&groups_id));
     }
     let mut sessions_map: HashMap<i32, ShortSessionInfoMap> = HashMap::new();
 
@@ -169,6 +169,74 @@ pub fn get_sessions_with_filters(
             entry.groups.insert(ShortGroupInfo { id: sess.7 });
             entry.teachers.insert(ShortTeacherInfo { id: sess.8 });
         });
+
+    let filters_collection = [&teachers_id, &courses_id, &parts_id, &rooms_id, &groups_id];
+
+    if filters_collection
+        .iter()
+        .any(|filter_id| !filter_id.is_empty())
+    {
+        let session_ids: Vec<i32> = sessions_map.keys().cloned().collect();
+
+        if !teachers_id.is_empty() {
+            schema::sessions_teachers::table
+                .filter(schema::sessions_teachers::session_id.eq_any(&session_ids))
+                .select((
+                    schema::sessions_teachers::session_id,
+                    schema::sessions_teachers::teacher_id,
+                ))
+                .load::<(i32, String)>(conn)?
+                .into_iter()
+                .for_each(|tuple| {
+                    sessions_map
+                        .get_mut(&tuple.0)
+                        .unwrap()
+                        .teachers
+                        .insert(ShortTeacherInfo { id: tuple.1 });
+                });
+        }
+        if !rooms_id.is_empty() {
+            schema::sessions_rooms::table
+                .filter(schema::sessions_rooms::session_id.eq_any(&session_ids))
+                .select((
+                    schema::sessions_rooms::session_id,
+                    schema::sessions_rooms::room_id,
+                ))
+                .load::<(i32, String)>(conn)?
+                .into_iter()
+                .for_each(|tuple| {
+                    sessions_map
+                        .get_mut(&tuple.0)
+                        .unwrap()
+                        .rooms
+                        .insert(ShortRoomInfo { id: tuple.1 });
+                });
+        }
+        if !groups_id.is_empty() {
+            schema::sessions::table
+                .filter(schema::sessions::id.eq_any(&session_ids))
+                .inner_join(
+                    schema::classes::table.on(schema::classes::id
+                        .eq(schema::sessions::class_id)
+                        .and(schema::classes::solution_id.eq(schema::sessions::solution_id))),
+                )
+                .inner_join(
+                    schema::classes_groups::table.on(schema::classes_groups::class_id
+                        .eq(schema::classes::id)
+                        .and(schema::classes::solution_id.eq(schema::classes_groups::solution_id))),
+                )
+                .select((schema::sessions::id, schema::classes_groups::group_id))
+                .load::<(i32, String)>(conn)?
+                .into_iter()
+                .for_each(|tuple| {
+                    sessions_map
+                        .get_mut(&tuple.0)
+                        .unwrap()
+                        .groups
+                        .insert(ShortGroupInfo { id: tuple.1 });
+                });
+        }
+    }
 
     return Ok(sessions_map
         .into_values()
