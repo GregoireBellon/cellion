@@ -8,9 +8,12 @@ use diesel::{
 
 use crate::models::schema;
 
-use super::solutions_dto::{
-    ShortCourseInfo, ShortGroupInfo, ShortPartInfo, ShortRoomInfo, ShortSessionInfo,
-    ShortTeacherInfo,
+use super::{
+    query_controller::FilterList,
+    solutions_dto::{
+        ShortCourseInfo, ShortGroupInfo, ShortPartInfo, ShortRoomInfo, ShortSessionInfo,
+        ShortTeacherInfo,
+    },
 };
 
 struct ShortSessionInfoMap {
@@ -171,4 +174,42 @@ pub fn get_sessions_with_filters(
         .into_values()
         .map(ShortSessionInfoMap::into)
         .collect::<Vec<ShortSessionInfo>>());
+}
+
+pub fn get_filter_list(
+    conn: &mut SqliteConnection,
+    request_solution_id: i32,
+) -> Result<FilterList, DieselError> {
+    let courses = schema::classes::table
+        .filter(schema::classes::solution_id.eq(request_solution_id))
+        .select(schema::classes::id)
+        .get_results::<String>(conn)?;
+
+    let parts = schema::parts::table
+        .filter(schema::parts::solution_id.eq(request_solution_id))
+        .select(schema::parts::id)
+        .get_results::<String>(conn)?;
+
+    let teachers = schema::teachers::table
+        .filter(schema::teachers::solution_id.eq(request_solution_id))
+        .select(schema::teachers::name)
+        .get_results::<String>(conn)?;
+
+    let rooms = schema::rooms::table
+        .filter(schema::rooms::solution_id.eq(request_solution_id))
+        .select(schema::rooms::id)
+        .get_results::<String>(conn)?;
+
+    let groups = schema::groups::table
+        .filter(schema::groups::solution_id.eq(request_solution_id))
+        .select(schema::groups::id)
+        .get_results::<String>(conn)?;
+
+    Ok(FilterList {
+        courses: courses,
+        parts: parts,
+        teachers: teachers,
+        rooms: rooms,
+        groups: groups,
+    })
 }
