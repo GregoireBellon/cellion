@@ -1,0 +1,21 @@
+meta {
+  name: Get session
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{base_url}}/solutions/1/query
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "courses": [],
+    "parts": [],
+    "teachers": [],
+    "rooms": [],
+    "groups": []
+  }
+}

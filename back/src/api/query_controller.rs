@@ -1,9 +1,12 @@
 use actix_web::{error::ErrorBadRequest, get, web, Error as ActixError, HttpResponse, Responder};
-use diesel::{result::Error as DieselError, ExpressionMethods, QueryDsl, RunQueryDsl};
+use diesel::{result::Error as DieselError, RunQueryDsl};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    api::{do_with_db, query_service::get_sessions_with_filters},
+    api::{
+        do_with_db,
+        query_service::{get_filter_list, get_sessions_with_filters},
+    },
     models::{db::Solution, schema},
     DbPool,
 };
@@ -24,41 +27,8 @@ pub async fn get_availables_filters(
 ) -> Result<impl Responder, ActixError> {
     let request_solution_id = info.into_inner();
 
-    let result: Result<FilterList, DieselError> = do_with_db(pool, move |conn| {
-        let courses = schema::classes::table
-            .filter(schema::classes::solution_id.eq(request_solution_id))
-            .select(schema::classes::id)
-            .get_results::<String>(conn)?;
-
-        let parts = schema::parts::table
-            .filter(schema::parts::solution_id.eq(request_solution_id))
-            .select(schema::parts::id)
-            .get_results::<String>(conn)?;
-
-        let teachers = schema::teachers::table
-            .filter(schema::teachers::solution_id.eq(request_solution_id))
-            .select(schema::teachers::name)
-            .get_results::<String>(conn)?;
-
-        let rooms = schema::rooms::table
-            .filter(schema::rooms::solution_id.eq(request_solution_id))
-            .select(schema::rooms::id)
-            .get_results::<String>(conn)?;
-
-        let groups = schema::groups::table
-            .filter(schema::groups::solution_id.eq(request_solution_id))
-            .select(schema::groups::id)
-            .get_results::<String>(conn)?;
-
-        Ok(FilterList {
-            courses: courses,
-            parts: parts,
-            teachers: teachers,
-            rooms: rooms,
-            groups: groups,
-        })
-    })
-    .await?;
+    let result: Result<FilterList, DieselError> =
+        do_with_db(pool, move |conn| get_filter_list(conn, request_solution_id)).await?;
 
     match result {
         Ok(filters) => Ok(HttpResponse::Ok().json(filters)),

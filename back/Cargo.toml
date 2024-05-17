@@ -2,8 +2,6 @@
 name = "back"
 version = "0.1.0"
 edition = "2021"
-debuginfo-level = 1
-jemalloc = false
 
 [dependencies]
 actix-web = "4"
