@@ -11,6 +11,9 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: 'back' # Here the path to the folder where package-lock.json is located.
     steps:
     - uses: actions/checkout@v4
     - uses: Swatinem/rust-cache@v2
@@ -18,7 +21,5 @@ jobs:
         workspaces: "./back -> target"
     - name: Build
       run: cargo build --verbose
-      working-directory: ./back
     - name: Run tests
       run: cargo test --verbose
-      working-directory: ./back
