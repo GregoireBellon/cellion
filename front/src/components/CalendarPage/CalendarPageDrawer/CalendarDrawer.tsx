@@ -20,8 +20,8 @@ interface Props {
 }
 
 const CalendarDrawer: FC<Props> = ({
-  date,
-  onDateChange,
+  // date,
+  // onDateChange,
   filtersOptions,
   filters,
   onFiltersChange,

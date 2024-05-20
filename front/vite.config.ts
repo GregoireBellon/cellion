@@ -9,12 +9,14 @@ export default defineConfig(({ mode }) => {
     server: {
       port: 8080,
       proxy: {
-        "/api": {
-          target: isDev ? "http://localhost:5000" : "http://api:5000",
-          changeOrigin: isDev ? true : false,
-          secure: isDev ? false : true,
-          rewrite: (path) => path.replace(/^\/api/, ""),
-        },
+        ...(isDev && {
+          "/api": {
+            target: "http://localhost:5000",
+            changeOrigin: true,
+            secure: false,
+            rewrite: (path) => path.replace(/^\/api/, ""),
+          },
+        }),
       },
     },
   };

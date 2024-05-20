@@ -254,9 +254,9 @@ pub fn get_filter_list(
     conn: &mut SqliteConnection,
     request_solution_id: i32,
 ) -> Result<FilterList, DieselError> {
-    let courses = schema::classes::table
-        .filter(schema::classes::solution_id.eq(request_solution_id))
-        .select(schema::classes::id)
+    let courses = schema::courses::table
+        .filter(schema::courses::solution_id.eq(request_solution_id))
+        .select(schema::courses::id)
         .get_results::<String>(conn)?;
 
     let parts = schema::parts::table

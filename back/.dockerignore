@@ -1,0 +1,4 @@
+val.db
+target/
+dockerignore
+Dockerfile
