@@ -1,23 +1,22 @@
-FROM rust:buster as build
+FROM rust:alpine as build
 
-WORKDIR /tmp/build
+RUN apk add sqlite-static sqlite-dev musl-dev
 
-RUN apt-get update && apt-get install -y libsqlite3-dev
+WORKDIR /usr/src/build
 
 COPY . .
-
 RUN cargo build --release
 
 ####### 
 
-FROM rust:buster
+FROM rust:alpine 
 
-RUN apt-get update && apt-get install -y libsqlite3-dev
+RUN apk add --update sqlite musl
 
 WORKDIR /usr/src/app
 
-COPY --from=build /tmp/build/target/release/back ./app
-
-RUN cargo install diesel_cli --no-default-features --features sqlite
+COPY --from=build /usr/src/build/target/release/back ./app
 
 EXPOSE 8080
+
+ENTRYPOINT [ "./app" ]

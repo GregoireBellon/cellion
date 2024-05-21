@@ -3,13 +3,8 @@ services:
     build:
       context: ./back
       dockerfile: docker/Dockerfile
-
     env_file:
       - ./back/.env
-    command: >
-      sh -c "diesel setup &&
-             diesel migration run &&
-             ./app"
 
   front:
     build:

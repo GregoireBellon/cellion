@@ -1,4 +1,3 @@
 val.db
-target/
 dockerignore
 docker
