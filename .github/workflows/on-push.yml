@@ -25,4 +25,4 @@ jobs:
     with:
       context: "back"
       file: "back/docker/Dockerfile"
-      image-name: "${{github.repository}}-front"
+      image-name: "${{github.repository}}-back"
