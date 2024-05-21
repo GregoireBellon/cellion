@@ -1,0 +1,26 @@
+name: On push
+
+on:
+  push:
+    branches: ["main", "feat/cd"]
+
+jobs:
+  test-front:
+    uses: ./test-front.yml
+
+  test-back:
+    uses: ./test-back.yml
+
+  publish-front:
+    needs: test-front
+    uses: ./publish-docker.yml
+    with:
+      context: "front"
+      image-name: "front/docker/Dockerfile"
+
+  publish-back:
+    needs: test-back
+    uses: ./publish-docker.yml
+    with:
+      context: "back"
+      image-name: "back/docker/Dockerfile"
