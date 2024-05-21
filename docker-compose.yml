@@ -6,10 +6,10 @@ services:
 
     env_file:
       - ./back/.env
-    command: cargo run --release
+    command: ./target/release/back
 
     ports:
-      - 127.0.0.1:5000:5000
+      - 5000:5000
   front:
     build:
       context: ./front
@@ -17,6 +17,6 @@ services:
     environment:
       - BACK_REF=back
     ports:
-      - 127.0.0.1:8080:80
+      - 8080:80
     depends_on:
       - back
