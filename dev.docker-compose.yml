@@ -2,11 +2,12 @@ services:
   back:
     build:
       context: ./back
-      dockerfile: docker/Dockerfile
-
+      dockerfile: docker/dev.Dockerfile
+    volumes:
+      - ./back:/usr/src/app
     env_file:
       - ./back/.env
-    command: cargo run --release
+    command: cargo watch -x run
 
     ports:
       - 127.0.0.1:5000:5000
