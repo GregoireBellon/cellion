@@ -1,0 +1,12 @@
+name: On PR
+
+on:
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  test-front:
+    uses: ./.github/workflows/test-front.yml
+
+  test-back:
+    uses: ./.github/workflows/test-back.yml
