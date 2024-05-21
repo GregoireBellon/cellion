@@ -5,11 +5,11 @@ on:
     branches: ["main"]
 
 jobs:
-  # test-front:
-  #   uses: ./.github/workflows/test-front.yml
+  test-front:
+    uses: ./.github/workflows/test-front.yml
 
-  # test-back:
-  #   uses: ./.github/workflows/test-back.yml
+  test-back:
+    uses: ./.github/workflows/test-back.yml
 
   publish-front:
     permissions:
@@ -18,7 +18,7 @@ jobs:
       attestations: write
       id-token: write
 
-    # needs: test-front
+    needs: test-front
     uses: ./.github/workflows/publish-docker.yml
     with:
       context: "front"
@@ -32,7 +32,7 @@ jobs:
       attestations: write
       id-token: write
 
-    # needs: test-back
+    needs: test-back
     uses: ./.github/workflows/publish-docker.yml
     with:
       context: "back"
