@@ -16,6 +16,7 @@ jobs:
       contents: read
       packages: write
       attestations: write
+      id-token: write
 
     # needs: test-front
     uses: ./.github/workflows/publish-docker.yml
@@ -29,6 +30,7 @@ jobs:
       contents: read
       packages: write
       attestations: write
+      id-token: write
 
     # needs: test-back
     uses: ./.github/workflows/publish-docker.yml
