@@ -16,11 +16,13 @@ jobs:
     uses: ./publish-docker.yml
     with:
       context: "front"
-      image-name: "front/docker/Dockerfile"
+      file: "front/docker/Dockerfile"
+      image-name: "${{github.repository}}-front"
 
   publish-back:
     needs: test-back
     uses: ./publish-docker.yml
     with:
       context: "back"
-      image-name: "back/docker/Dockerfile"
+      file: "back/docker/Dockerfile"
+      image-name: "${{github.repository}}-front"
