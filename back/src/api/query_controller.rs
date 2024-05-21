@@ -1,4 +1,8 @@
-use actix_web::{error::ErrorBadRequest, get, web, Error as ActixError, HttpResponse, Responder};
+use actix_web::{
+    error::{self, ErrorBadRequest},
+    get, post, web, Error as ActixError, HttpResponse, Responder,
+};
+use chrono::NaiveDateTime;
 use diesel::{result::Error as DieselError, RunQueryDsl};
 use serde::{Deserialize, Serialize};
 
@@ -53,6 +57,8 @@ pub async fn get_availables_solutions(
 
 #[derive(Deserialize)]
 struct ReadInstanceBody {
+    pub from: Option<String>,
+    pub to: Option<String>,
     pub courses: Vec<String>,
     pub parts: Vec<String>,
     pub teachers: Vec<String>,
@@ -60,7 +66,7 @@ struct ReadInstanceBody {
     pub groups: Vec<String>,
 }
 
-#[get("/{solution_id}/query")]
+#[post("/{solution_id}/query")]
 pub async fn get_sessions(
     body: web::Json<ReadInstanceBody>,
     info: web::Path<i32>,
@@ -69,10 +75,36 @@ pub async fn get_sessions(
     let request_solution_id = info.into_inner();
     let body = body.into_inner();
 
+    let date_fmt = "%Y-%m-%dT%H:%M:%S%.f%z";
+    let mut parsed_from: Option<NaiveDateTime> = None;
+    let mut parsed_to: Option<NaiveDateTime> = None;
+
+    if let Some(from) = body.from {
+        let date_time = NaiveDateTime::parse_from_str(&from, date_fmt).map_err(|_| {
+            error::ErrorBadRequest(format!(
+                "Invalid date format for parameter 'from', expected {}",
+                date_fmt
+            ))
+        });
+        parsed_from = Some(date_time?)
+    }
+
+    if let Some(to) = body.to {
+        let date_time = NaiveDateTime::parse_from_str(&to, date_fmt).map_err(|_| {
+            error::ErrorBadRequest(format!(
+                "Invalid date format for parameter 'to', expected {}",
+                date_fmt
+            ))
+        });
+        parsed_to = Some(date_time?)
+    }
+
     let result = do_with_db(pool, move |conn| {
         get_sessions_with_filters(
             conn,
             request_solution_id,
+            parsed_from,
+            parsed_to,
             body.courses,
             body.parts,
             body.teachers,
