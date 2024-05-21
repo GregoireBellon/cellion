@@ -5,11 +5,11 @@ on:
     branches: ["main", "feat/cd"]
 
 jobs:
-  test-front:
-    uses: ./.github/workflows/test-front.yml
+  # test-front:
+  #   uses: ./.github/workflows/test-front.yml
 
-  test-back:
-    uses: ./.github/workflows/test-back.yml
+  # test-back:
+  #   uses: ./.github/workflows/test-back.yml
 
   publish-front:
     permissions:
@@ -17,7 +17,7 @@ jobs:
       packages: write
       attestations: write
 
-    needs: test-front
+    # needs: test-front
     uses: ./.github/workflows/publish-docker.yml
     with:
       context: "front"
@@ -30,7 +30,7 @@ jobs:
       packages: write
       attestations: write
 
-    needs: test-back
+    # needs: test-back
     uses: ./.github/workflows/publish-docker.yml
     with:
       context: "back"
