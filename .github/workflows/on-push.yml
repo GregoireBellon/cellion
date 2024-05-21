@@ -5,6 +5,11 @@ on:
     branches: ["main", "feat/cd"]
 
 jobs:
+  permissions:
+    contents: read
+    packages: write
+    attestations: write
+
   test-front:
     uses: ./.github/workflows/test-front.yml
 
