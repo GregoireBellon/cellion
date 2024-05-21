@@ -6,7 +6,7 @@ RUN cargo install diesel_cli --no-default-features --features sqlite
 RUN cargo install cargo-watch
 
 WORKDIR /usr/src/app
-COPY .. .
+COPY . .
 
 RUN cargo install --path .
 

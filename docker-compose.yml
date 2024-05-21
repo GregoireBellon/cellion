@@ -6,7 +6,11 @@ services:
 
     env_file:
       - ./back/.env
-    command: ./target/release/back
+    command: >
+      sh -c "diesel setup &&
+             diesel migration run &&
+             ./app"
+
   front:
     build:
       context: ./front

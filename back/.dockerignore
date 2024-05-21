@@ -1,4 +1,4 @@
 val.db
 target/
 dockerignore
-Dockerfile
+docker
