@@ -5,11 +5,6 @@ on:
     branches: ["main", "feat/cd"]
 
 jobs:
-  permissions:
-    contents: read
-    packages: write
-    attestations: write
-
   test-front:
     uses: ./.github/workflows/test-front.yml
 
@@ -17,6 +12,11 @@ jobs:
     uses: ./.github/workflows/test-back.yml
 
   publish-front:
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+
     needs: test-front
     uses: ./.github/workflows/publish-docker.yml
     with:
@@ -25,6 +25,11 @@ jobs:
       image-name: "${{github.repository}}-front"
 
   publish-back:
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+
     needs: test-back
     uses: ./.github/workflows/publish-docker.yml
     with:
