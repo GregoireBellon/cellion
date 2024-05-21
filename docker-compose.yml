@@ -7,9 +7,6 @@ services:
     env_file:
       - ./back/.env
     command: ./target/release/back
-
-    ports:
-      - 5000:5000
   front:
     build:
       context: ./front
