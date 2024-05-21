@@ -1,15 +1,11 @@
 services:
   back:
-    build:
-      context: ./back
-      dockerfile: docker/Dockerfile
+    image: ghcr.io/gregoirebellon/cellion-back:main
     env_file:
       - ./back/.env
 
   front:
-    build:
-      context: ./front
-      dockerfile: docker/Dockerfile
+    image: ghcr.io/gregoirebellon/cellion-front:main
     environment:
       - BACK_REF=back
     ports:
