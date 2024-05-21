@@ -5,6 +5,8 @@
 
         root /usr/share/nginx/html;
 
+        client_max_body_size 10G;
+
         server_name _;
 
         location / {
