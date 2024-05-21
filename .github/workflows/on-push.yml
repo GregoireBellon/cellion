@@ -6,14 +6,14 @@ on:
 
 jobs:
   test-front:
-    uses: ./.gihub/workflows/test-front.yml
+    uses: ./.github/workflows/test-front.yml
 
   test-back:
-    uses: ./.gihub/workflows/test-back.yml
+    uses: ./.github/workflows/test-back.yml
 
   publish-front:
     needs: test-front
-    uses: ./.gihub/workflows/publish-docker.yml@main
+    uses: ./.github/workflows/publish-docker.yml
     with:
       context: "front"
       file: "front/docker/Dockerfile"
@@ -21,7 +21,7 @@ jobs:
 
   publish-back:
     needs: test-back
-    uses: ./.gihub/workflows/publish-docker.yml
+    uses: ./.github/workflows/publish-docker.yml
     with:
       context: "back"
       file: "back/docker/Dockerfile"
