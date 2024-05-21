@@ -1,3 +1,6 @@
 val.db
 dockerignore
 docker
+target
+.env*
+val.db

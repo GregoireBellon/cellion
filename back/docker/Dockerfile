@@ -9,9 +9,9 @@ RUN cargo build --release
 
 ####### 
 
-FROM rust:alpine 
+FROM alpine 
 
-RUN apk add --update sqlite musl
+RUN apk add --no-cache sqlite musl
 
 WORKDIR /usr/src/app
 
