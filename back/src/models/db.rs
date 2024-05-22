@@ -14,6 +14,7 @@ pub type InsertSolution<'a> = (
 pub struct Solution {
     pub id: i32,
     pub filename: String,
+    pub slot_duration: i32,
     pub created_at: NaiveDateTime,
 }
 
