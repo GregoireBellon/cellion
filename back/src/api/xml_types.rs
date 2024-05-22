@@ -164,9 +164,36 @@ pub struct XmlSession {
 }
 
 #[derive(Deserialize, Debug)]
+pub struct XmlCalendar {
+    #[serde(rename = "@startingWeek")]
+    pub starting_week: u32,
+
+    #[serde(rename = "@year")]
+    pub year: i32,
+
+    #[serde(rename = "weeks")]
+    pub weeks: XmlCalendarMetaData,
+
+    #[serde(rename = "days")]
+    pub days: XmlCalendarMetaData,
+
+    #[serde(rename = "slots")]
+    pub slots: XmlCalendarMetaData,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct XmlCalendarMetaData {
+    #[serde(rename = "@nr")]
+    pub nr: i32,
+
+    #[serde(rename = "@sequence", default)]
+    pub sequence: Option<String>,
+}
+
+#[derive(Deserialize, Debug)]
 pub struct XmlSessionStartingSlot {
     #[serde(rename = "@dailySlot")]
-    pub daily_slot: u32,
+    pub daily_slot: u16,
 
     #[serde(rename = "@day")]
     pub day: u32,

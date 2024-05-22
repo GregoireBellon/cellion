@@ -9,7 +9,7 @@ use actix_multipart::form::{tempfile::TempFile, MultipartForm};
 use actix_web::{error as actix_error, post, web, Error as ActixError, HttpResponse, Responder};
 use chrono::Utc;
 use diesel::ExpressionMethods;
-use log::error;
+use log::{debug, error};
 use quick_xml::{
     de::from_str,
     events::{BytesStart, Event},
@@ -26,7 +26,9 @@ use crate::{
     DbPool,
 };
 
-use super::xml_types::{XmlCourse, XmlSession, XmlSolutionClass, XmlSolutionGroup, XmlStudent};
+use super::xml_types::{
+    XmlCalendar, XmlCourse, XmlSession, XmlSolutionClass, XmlSolutionGroup, XmlStudent,
+};
 
 #[derive(MultipartForm)]
 struct SolutionUpload {
@@ -70,10 +72,14 @@ pub async fn post_route(
                 schema::solutions::created_at.eq(&Utc::now().naive_utc()),
             ),
         )
-        .map_err(|e| format!("{:#?}", e))?;
+        .map_err(|e| e.to_string())?;
+
+        debug!("Solution inserted");
 
         extract_file(payload.file.file.path(), &mut solution_inserter)
             .map_err(|e| e.to_string())?;
+
+        debug!("File extracted ");
 
         return solution_inserter
             .insert_all_into_db()
@@ -174,6 +180,7 @@ fn handle_xml_event<R: BufRead>(
                 && route.get(1).unwrap() == "students"
                 && bytes_start.name().into_inner() == b"student"
             {
+                // debug!("In student");
                 handle_students_declaration(
                     solution_inserter,
                     bytes_start,
@@ -184,10 +191,26 @@ fn handle_xml_event<R: BufRead>(
 
                 // manually pop the route, as handle_course_declaration parse the ending XML tag
                 route.pop();
+            } else if route.len() == 4
+                && route.get(1).unwrap() == "solution"
+                && route.get(2).unwrap() == "sessions"
+                && bytes_start.name().into_inner() == b"session"
+            {
+                // debug!("In session");
+                handle_solution_session_declaration(
+                    solution_inserter,
+                    bytes_start,
+                    reader,
+                    buffer,
+                    serialization_buffer,
+                );
+                // manually pop the route, as handle_course_declaration parse the ending XML tag
+                route.pop();
             } else if route.len() == 3
                 && route.get(1).unwrap() == "courses"
                 && bytes_start.name().into_inner() == b"course"
             {
+                // debug!("In course");
                 handle_course_declaration(
                     solution_inserter,
                     bytes_start,
@@ -204,6 +227,7 @@ fn handle_xml_event<R: BufRead>(
                 && route.get(2).unwrap() == "groups"
                 && bytes_start.name().into_inner() == b"group"
             {
+                // debug!("In solution group");
                 handle_solution_group_declaration(
                     solution_inserter,
                     bytes_start,
@@ -218,6 +242,7 @@ fn handle_xml_event<R: BufRead>(
                 && route.get(2).unwrap() == "classes"
                 && bytes_start.name().into_inner() == b"class"
             {
+                // debug!("In solution class");
                 handle_solution_class_declaration(
                     solution_inserter,
                     bytes_start,
@@ -227,18 +252,20 @@ fn handle_xml_event<R: BufRead>(
                 );
                 // manually pop the route, as handle_course_declaration parse the ending XML tag
                 route.pop();
-            } else if route.len() == 4
-                && route.get(1).unwrap() == "solution"
-                && route.get(2).unwrap() == "sessions"
-                && bytes_start.name().into_inner() == b"session"
+            } else if route.len() == 2
+                && route.get(0).unwrap() == "timetabling"
+                && bytes_start.name().into_inner() == b"calendar"
             {
-                handle_solution_session_declaration(
+                debug!("In calendar");
+                handle_calendar_declaration(
                     solution_inserter,
                     bytes_start,
                     reader,
                     buffer,
                     serialization_buffer,
-                );
+                )
+                .ok();
+
                 // manually pop the route, as handle_course_declaration parse the ending XML tag
                 route.pop();
             }
@@ -306,6 +333,28 @@ fn handle_course_declaration<R: BufRead>(
         Ok(course) => solution_inserter.add_course(course),
         Err(e) => {
             error!("Error while deserializing course: {}", e);
+            return Err(e);
+        }
+    }
+}
+
+fn handle_calendar_declaration<R: BufRead>(
+    solution_inserter: &mut SolutionInserter,
+    node: BytesStart,
+    reader: &mut Reader<R>,
+    buffer: &mut Vec<u8>,
+    serialization_buffer: &mut Vec<u8>,
+) -> Result<(), Box<dyn Error>> {
+    match deserialize_element::<XmlCalendar, R>(reader, &node, buffer, serialization_buffer) {
+        Ok(calendar) => match solution_inserter.add_calendar(calendar) {
+            Ok(_) => Ok(()),
+            Err(e) => {
+                error!("Error while getting the calendar : {}", e);
+                Err(Box::from(e))
+            }
+        },
+        Err(e) => {
+            error!("Error while deserializing calendar : {}", e);
             return Err(e);
         }
     }

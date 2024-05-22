@@ -101,6 +101,7 @@ diesel::table! {
     solutions (id) {
         id -> Integer,
         filename -> Text,
+        slot_duration -> Integer,
         created_at -> Timestamp,
     }
 }

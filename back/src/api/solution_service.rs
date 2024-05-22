@@ -1,8 +1,11 @@
 use std::{error::Error, ops::Deref};
 
-use chrono::{DateTime, Datelike, Local, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc};
-use diesel::{self, QueryResult, RunQueryDsl, SqliteConnection};
-use log::{debug, error};
+use chrono::{DateTime, Datelike, Local, TimeZone, Utc};
+use diesel::{
+    self, result::Error as DieselError, ExpressionMethods, QueryResult, RunQueryDsl,
+    SqliteConnection,
+};
+use log::{error, warn};
 use uuid::Uuid;
 
 use crate::models::{
@@ -10,13 +13,16 @@ use crate::models::{
         last_insert_rowid, Class, ClassGroupOwn, ClassRoomOwn, ClassTeacherOwn, Course,
         InsertSolution, Part, Room, Session, SolutionGroupOwn, Student, StudentGroupOwn, Teacher,
     },
-    schema,
+    schema::{self},
 };
 
-use super::xml_types::{
-    XmlClass, XmlCourse, XmlGroupClasses, XmlGroupStudents, XmlPart, XmlRoom, XmlSession,
-    XmlSolutionClass, XmlSolutionClassRooms, XmlSolutionClassTeachers, XmlSolutionGroup,
-    XmlStudent, XmlTeacher,
+use super::{
+    date_service::{extract_session_date, extract_starting_date},
+    xml_types::{
+        XmlCalendar, XmlClass, XmlCourse, XmlGroupClasses, XmlGroupStudents, XmlPart, XmlRoom,
+        XmlSession, XmlSolutionClass, XmlSolutionClassRooms, XmlSolutionClassTeachers,
+        XmlSolutionGroup, XmlStudent, XmlTeacher,
+    },
 };
 
 fn use_query<F, R>(base_query: &str, buff: &mut Vec<String>, rows_to_insert: &mut i32, f: F) -> R
@@ -53,10 +59,6 @@ where
         }
     }
 
-    debug!("Request : {}", query);
-    debug!("Capacity expected : {}", capacity_needed);
-    debug!("Capacity needed : {}", query.len());
-
     let ret = f(query);
 
     buff.clear();
@@ -79,6 +81,9 @@ where
 pub struct SolutionInserter<'a> {
     conn: &'a mut SqliteConnection,
     solution_id: i32,
+
+    starting_date: DateTime<Utc>,
+    slot_duration: u16,
 
     rows_to_insert: i32,
 
@@ -112,6 +117,12 @@ impl<'a> SolutionInserter<'a> {
         return Ok(SolutionInserter {
             conn: conn,
             solution_id: solution_id,
+
+            starting_date: Utc
+                .with_ymd_and_hms(Local::now().year(), 1, 1, 0, 0, 0)
+                .unwrap(),
+            slot_duration: 1,
+
             rows_to_insert: 0,
             rooms_to_insert: Vec::new(),
             teachers_to_insert: Vec::new(),
@@ -270,6 +281,23 @@ impl<'a> SolutionInserter<'a> {
         return Ok(nb_inserted);
     }
 
+    pub fn add_calendar(&mut self, calendar: XmlCalendar) -> QueryResult<usize> {
+        // Minutes in a day divided by the number of slots in the day
+        self.slot_duration = ((60 * 24) / calendar.slots.nr) as u16;
+
+        let extracted_date = extract_starting_date(calendar.year, calendar.starting_week, &Utc);
+
+        match extracted_date {
+            Some(extracted) => self.starting_date = extracted,
+            None => warn!("The starting date described by calendar is not valid !"),
+        }
+
+        diesel::update(schema::solutions::table)
+            .filter(schema::solutions::id.eq(self.solution_id))
+            .set(schema::solutions::slot_duration.eq(self.slot_duration as i32))
+            .execute(self.conn)
+    }
+
     pub fn add_student(&mut self, student: XmlStudent) {
         self.students_to_insert
             .push(student.into_db_entry(self.solution_id));
@@ -321,7 +349,7 @@ impl<'a> SolutionInserter<'a> {
 
     pub fn add_session(&mut self, session: XmlSession) -> Result<(), String> {
         session
-            .into_db_entry(self.solution_id)
+            .into_db_entry(self.solution_id, &self.starting_date, self.slot_duration)
             .map(|s| self.sessions_to_insert.push(s))?;
 
         session.teachers.map(|teachs| {
@@ -509,50 +537,40 @@ impl XmlSolutionClassTeachers {
 }
 
 impl XmlSession {
-    fn into_db_entry(&self, given_solution_id: i32) -> Result<Session, String> {
-        self.extract_date(
-            &NaiveDate::from_ymd_opt(Utc::now().year(), 1, 1).unwrap(),
-            &Local,
-        )
-        .map(|date| Session {
-            solution_id: given_solution_id,
-            uuid: Uuid::new_v4().to_string(),
-            class_id: self.class.to_string(),
-            rank: self.rank,
-            starting_date: date.naive_utc(),
-        })
-        .ok_or(String::from("La date est invalide"))
+    fn into_db_entry(
+        &self,
+        given_solution_id: i32,
+        starting_date: &DateTime<Utc>,
+        slot_duration: u16,
+    ) -> Result<Session, String> {
+        self.extract_date(starting_date, slot_duration)
+            .map(|date| Session {
+                solution_id: given_solution_id,
+                uuid: Uuid::new_v4().to_string(),
+                class_id: self.class.to_string(),
+                rank: self.rank,
+                starting_date: date.naive_utc(),
+            })
+            .ok_or(String::from("La date est invalide"))
     }
 
     fn extract_date(
         &self,
-        starting_date: &NaiveDate,
-        timezone: &impl TimeZone,
+        starting_date: &DateTime<Utc>,
+        slot_duration: u16,
     ) -> Option<DateTime<Utc>> {
-        let mut extracted_date: NaiveDate = starting_date.clone();
-
         if self.starting_slot.is_none() {
             return None;
         }
 
-        let starting_slot = &self.starting_slot.as_ref().unwrap();
+        let starting_slot = self.starting_slot.as_ref().unwrap();
 
-        extracted_date = starting_date
-            .checked_add_signed(chrono::Duration::weeks(starting_slot.week as i64))
-            .unwrap_or(extracted_date);
-
-        extracted_date = starting_date
-            .checked_add_signed(chrono::Duration::days(starting_slot.day as i64))
-            .unwrap_or(extracted_date);
-
-        let extracted_time =
-            NaiveTime::from_num_seconds_from_midnight_opt(60 * starting_slot.daily_slot, 0)?;
-
-        let extracted_date_time = timezone
-            .from_local_datetime(&NaiveDateTime::new(extracted_date, extracted_time))
-            .single()
-            .unwrap();
-
-        return Some(extracted_date_time.with_timezone(&Utc));
+        return extract_session_date(
+            starting_date,
+            slot_duration,
+            starting_slot.daily_slot,
+            starting_slot.week,
+            starting_slot.day,
+        );
     }
 }
