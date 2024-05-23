@@ -102,6 +102,7 @@ diesel::table! {
         id -> Integer,
         filename -> Text,
         slot_duration -> Integer,
+        calendar_start -> Nullable<Timestamp>,
         created_at -> Timestamp,
     }
 }

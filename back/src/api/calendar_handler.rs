@@ -268,7 +268,7 @@ mod tests {
         assert_eq!(
             calendar.extract_session_date(480, 3, 1),
             Some(
-                Utc.with_ymd_and_hms(2023, 10, 2, 8, 0, 0)
+                Utc.with_ymd_and_hms(2023, 9, 25, 8, 0, 0)
                     .unwrap()
                     .naive_local()
             )
@@ -344,7 +344,7 @@ mod tests {
         assert_eq!(
             calendar.extract_session_date(480, 3, 1,),
             Some(
-                Utc.with_ymd_and_hms(2023, 10, 2, 8, 0, 0)
+                Utc.with_ymd_and_hms(2023, 9, 25, 8, 0, 0)
                     .unwrap()
                     .naive_local()
             )

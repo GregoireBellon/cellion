@@ -28,14 +28,14 @@ export class SDK implements ISDK {
         id: number;
         filename: string;
         created_at: string;
-        first_session_date: string;
+        calendar_start: string;
       }[]
     >(`/solutions`);
     return data.map((d) => ({
       id: d.id.toString(),
       createdAt: new Date(d.created_at),
       fileName: d.filename,
-      firstSessionDate: new Date(d.first_session_date),
+      calendarStart: new Date(d.calendar_start),
     }));
   }
 
@@ -67,16 +67,13 @@ export class SDK implements ISDK {
       id: number;
       filename: string;
       created_at: string;
-      first_session_date: string;
+      calendar_start: string;
     }>(`/solutions/${solutionId}`);
     return {
       id: data.id.toString(),
       createdAt: new Date(data.created_at),
       fileName: data.filename,
-      firstSessionDate:
-        // TODO
-        // new Date(data.first_session_date),
-        new Date("01/01/2024"),
+      calendarStart: new Date(data.calendar_start),
     };
   }
 }

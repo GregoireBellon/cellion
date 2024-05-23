@@ -63,10 +63,11 @@ impl<'a> SolutionInserter<'a> {
 
         diesel::update(schema::solutions::table)
             .filter(schema::solutions::id.eq(self.solution_id))
-            .set(
+            .set((
                 schema::solutions::slot_duration
                     .eq(self.calendar_data_handler.slot_duration as i32),
-            )
+                schema::solutions::calendar_start.eq(self.calendar_data_handler.starting_date),
+            ))
             .execute(self.conn)
     }
 

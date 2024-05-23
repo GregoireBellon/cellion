@@ -65,7 +65,7 @@ export class SDKMock implements ISDK {
         id: i.toString(),
         createdAt: new Date(),
         fileName: `TEST${i}`,
-        firstSessionDate: new Date(),
+        calendarStart: new Date(),
       });
     }
     return solutions;
@@ -83,7 +83,7 @@ export class SDKMock implements ISDK {
       createdAt: new Date(),
       fileName: "test",
       id: "2",
-      firstSessionDate: new Date(),
+      calendarStart: new Date(),
     };
   }
 }

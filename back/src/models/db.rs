@@ -15,6 +15,7 @@ pub struct Solution {
     pub id: i32,
     pub filename: String,
     pub slot_duration: i32,
+    pub calendar_start: Option<NaiveDateTime>,
     pub created_at: NaiveDateTime,
 }
 

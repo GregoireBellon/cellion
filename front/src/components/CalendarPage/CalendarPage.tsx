@@ -51,7 +51,7 @@ const CalendarPage: FC<Props> = ({ solutionId }) => {
   const [solutionInfo, setSolutionInfo] = useState<ShortSolutionInfo>({
     createdAt: new Date(),
     fileName: "",
-    firstSessionDate: new Date(),
+    calendarStart: new Date(),
     id: "",
   });
 
@@ -219,7 +219,7 @@ const CalendarPage: FC<Props> = ({ solutionId }) => {
       });
       setSolutionInfo(solution);
       if (!initialSearchParamFrom.current?.isValid) {
-        fullCalendarRef.current?.getApi()?.gotoDate(solution.firstSessionDate);
+        fullCalendarRef.current?.getApi()?.gotoDate(solution.calendarStart);
       }
     } catch (err) {
       console.error((err as Error).message);

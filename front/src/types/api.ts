@@ -21,7 +21,7 @@ export interface ReadSolutionBody {
 export interface ShortSolutionInfo {
   id: string;
   fileName: string;
-  firstSessionDate: Date;
+  calendarStart: Date;
   createdAt: Date;
 }
 
