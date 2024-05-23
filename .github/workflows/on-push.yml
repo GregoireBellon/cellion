@@ -26,19 +26,19 @@ jobs:
       file: "front/docker/Dockerfile"
       image-name: "${{github.repository}}-front"
 
-  publish-back:
-    permissions:
-      contents: read
-      packages: write
-      attestations: write
-      id-token: write
+  # publish-back:
+  #   permissions:
+  #     contents: read
+  #     packages: write
+  #     attestations: write
+  #     id-token: write
 
-    needs: [test-front, test-back]
-    uses: ./.github/workflows/publish-docker.yml
-    with:
-      context: "back"
-      file: "back/docker/Dockerfile"
-      image-name: "${{github.repository}}-back"
+  # needs: [test-front, test-back]
+  # uses: ./.github/workflows/publish-docker.yml
+  # with:
+  #   context: "back"
+  #   file: "back/docker/Dockerfile"
+  #   image-name: "${{github.repository}}-back"
 
   deploy:
     permissions:
@@ -47,7 +47,8 @@ jobs:
       attestations: write
       id-token: write
 
-    needs: [publish-front, publish-back]
+    # needs: [publish-front, publish-back]
+    needs: [publish-front]
     uses: ./.github/workflows/deploy.yml
     secrets:
       ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
