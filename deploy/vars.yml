@@ -4,6 +4,8 @@ docker_users:
   - "{{ ansible_user }}"
 
 
+ansible_user: "{{ lookup('env', 'ANSIBLE_USER'), 'root' }}"
+ansible_host: "{{ lookup('env', 'SERVER_IP')}}"
 cellion_docker_registry: "{{ lookup('env', 'DOCKER_REGISTRY') }}"
 cellion_docker_front_image: "{{ lookup('env', 'FRONT_IMAGE') }}"
 cellion_docker_back_image: "{{ lookup('env', 'BACK_IMAGE') }}"
