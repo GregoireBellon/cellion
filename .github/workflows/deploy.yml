@@ -1,0 +1,75 @@
+on:
+  workflow_call:
+    secrets:
+      ssh-private-key:
+        description: "Ansible user private key"
+        required: true
+      server-ip:
+        description: "Deployment server ip"
+        required: true
+      ansible-user:
+        description: "Ansible username"
+        required: true
+    inputs:
+      db-name:
+        description: "The name of the SQLight db"
+        default: "val.db"
+        required: false
+        type: string
+      db-folder:
+        description: "The folder of the SQLight on the host"
+        default: "/opt/cellion"
+        required: false
+        type: string
+      api-log-level:
+        description: "Log level of the api"
+        default: "info"
+        required: false
+        type: string
+      port:
+        description: "Port"
+        default: 8080
+        required: false
+        type: number
+      host:
+        description: "Host"
+        default: "0.0.0.0"
+        required: false
+        type: string
+
+env:
+  DOCKER_REGISTRY: ghcr.io
+  FRONT_IMAGE: ${{github.repository}}-front
+  BACK_IMAGE: ${{github.repository}}-back
+  DB_NAME: ${{ inputs.db-name }}
+  DB_FOLDER: ${{ inputs.db-folder }}
+  BACK_LOG_LEVEL: ${{ inputs.api-log-level }}
+  PORT: ${{ inputs.port }}
+  HOST: ${{ inputs.host }}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
+    steps:
+      - name: downcase front image name
+        run: |
+          echo "FRONT_IMAGE=${FRONT_IMAGE,,}" >>${GITHUB_ENV}
+      - name: downcase back image name
+        run: |
+          echo "BACK_IMAGE=${BACK_IMAGE,,}" >>${GITHUB_ENV}
+      - name: Run playbook
+        uses: dawidd6/action-ansible-playbook@v2
+        with:
+          playbook: deploy/playbook.yml
+          key: ${{secrets.ssh-private-key}}
+          requirements: deploy/requirements.yml
+          options: |
+            --inventory ${{secrets.server-ip}}
+            --user ${{secrets.ansible-user}}

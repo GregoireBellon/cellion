@@ -2,7 +2,8 @@ name: On push
 
 on:
   push:
-    branches: ["main"]
+    # branches: ["main"]
+    branches: ["dev-ci"]
 
 jobs:
   test-front:
@@ -18,7 +19,7 @@ jobs:
       attestations: write
       id-token: write
 
-    needs: test-front
+    needs: [test-front, test-back]
     uses: ./.github/workflows/publish-docker.yml
     with:
       context: "front"
@@ -32,9 +33,28 @@ jobs:
       attestations: write
       id-token: write
 
-    needs: test-back
+    needs: [test-front, test-back]
     uses: ./.github/workflows/publish-docker.yml
     with:
       context: "back"
       file: "back/docker/Dockerfile"
       image-name: "${{github.repository}}-back"
+
+  deploy:
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
+    needs: [publish-front, publish-back]
+    uses: ./.github/workflows/deploy.yml
+    secrets:
+      ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+      server-ip: ${{ secrets.SERVER_IP }}
+      ansible-user: ${{ secrets.ANSIBLE_USER }}
+    with:
+      db-name:
+      db-folder:
+      api-log-level:
+      port:
