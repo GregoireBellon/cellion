@@ -67,9 +67,10 @@ jobs:
       - name: Run playbook
         uses: dawidd6/action-ansible-playbook@v2
         with:
-          playbook: ./deploy/playbook.yml
+          directory: ./deploy
+          playbook: playbook.yml
           key: ${{secrets.ssh-private-key}}
-          requirements: ./deploy/requirements.yml
+          requirements: requirements.yml
           options: |
             --inventory ${{secrets.server-ip}}
             --user ${{secrets.ansible-user}}
