@@ -8,6 +8,11 @@
     - {role: geerlingguy.docker, become: true}
   
   tasks:
+    - name: Logout from ghcr to be able to pull public image
+      community.docker.docker_login:
+        registry: "{{ cellion_docker_registry }}"
+        state: absent
+
     - name: Start the docker-compose
       community.docker.docker_compose_v2:
         pull: "always"
