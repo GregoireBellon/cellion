@@ -53,8 +53,8 @@ jobs:
       ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       server-ip: ${{ secrets.SERVER_IP }}
       ansible-user: ${{ secrets.ANSIBLE_USER }}
-    with:
-      db-name:
-      db-folder:
-      api-log-level:
-      port:
+    # with:
+    #   db-name:
+    #   db-folder:
+    #   api-log-level:
+    #   port:
