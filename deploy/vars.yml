@@ -1,4 +1,4 @@
-ansible_user: "{{ lookup('env', 'ANSIBLE_USER') | 'root' }}"
+ansible_user: "{{ lookup('env', 'ANSIBLE_USER') | default('root') }}"
 ansible_host: "{{ lookup('env', 'SERVER_IP')}}"
 
 pip_install_packages:
@@ -10,8 +10,8 @@ docker_users:
 cellion_docker_registry: "{{ lookup('env', 'DOCKER_REGISTRY') }}"
 cellion_docker_front_image: "{{ lookup('env', 'FRONT_IMAGE') }}"
 cellion_docker_back_image: "{{ lookup('env', 'BACK_IMAGE') }}"
-cellion_db_name: "{{ lookup('env', 'DB_NAME' | default='val.db') }}"
-cellion_db_folder: "{{ lookup('env', 'DB_FOLDER') | default='/opt/cellion' }}"
-cellion_back_log_level: "{{ lookup('env', 'BACK_LOG_LEVEL') | default='info' }}"
-cellion_port: "{{ lookup('env', 'PORT') | default='8080' }}"
-cellion_host: "{{ lookup('env', 'HOST') | default='0.0.0.0' }}"
+cellion_db_name: "{{ lookup('env', 'DB_NAME') | default('val.db') }}"
+cellion_db_folder: "{{ lookup('env', 'DB_FOLDER') | default('/opt/cellion') }}"
+cellion_back_log_level: "{{ lookup('env', 'BACK_LOG_LEVEL') | default('info') }}"
+cellion_port: "{{ lookup('env', 'PORT') | default(8080) }}"
+cellion_host: "{{ lookup('env', 'HOST') | default('0.0.0.0') }}"
