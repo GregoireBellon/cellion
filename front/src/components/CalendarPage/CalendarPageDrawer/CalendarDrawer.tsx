@@ -3,15 +3,17 @@ import { FC, useCallback } from "react";
 import { Box } from "@mui/material";
 import CalendarDrawerDisplay from "./CalendarDisplay";
 
-import { DateTime } from "luxon";
 import CalendarFilters from "./CalendarFilters";
 import { SolutionFiltersInfo } from "../../../types/api";
 import { CalendarDisplaySettings } from "../../../types/calendar";
-import CalendarSearch from "./CalendarSearch";
+import CalendarDates from "./CalendarDates";
+import { DateTime } from "luxon";
 
 interface Props {
-  date: DateTime | null;
-  onDateChange: (newDate: DateTime | null) => void;
+  from: DateTime;
+  to: DateTime;
+  onPrevDate: () => void;
+  onNextDate: () => void;
   filtersOptions: SolutionFiltersInfo;
   filters: SolutionFiltersInfo;
   onFiltersChange: (newFilters: SolutionFiltersInfo) => void;
@@ -20,8 +22,10 @@ interface Props {
 }
 
 const CalendarDrawer: FC<Props> = ({
-  // date,
-  // onDateChange,
+  from,
+  to,
+  onPrevDate,
+  onNextDate,
   filtersOptions,
   filters,
   onFiltersChange,
@@ -42,10 +46,29 @@ const CalendarDrawer: FC<Props> = ({
     [onDisplayChange]
   );
 
+  const handlePrevDate = useCallback(() => {
+    onPrevDate();
+  }, [onPrevDate]);
+
+  const handleNextDate = useCallback(() => {
+    onNextDate();
+  }, [onNextDate]);
+
   return (
-    <Box display="flex" flexDirection="column" flexGrow={1} minWidth={360}>
-      <CalendarSearch />
-      {/* <CalendarDate value={date} onChange={handleDateChange} /> */}
+    <Box
+      display="flex"
+      flexDirection="column"
+      flexGrow={1}
+      minWidth={360}
+      gap={2}
+      sx={{ position: "sticky", top: 54 }}
+    >
+      <CalendarDates
+        from={from}
+        to={to}
+        onNext={handleNextDate}
+        onPrev={handlePrevDate}
+      />
       <CalendarDrawerDisplay value={display} onChange={handleDisplayChange} />
       <CalendarFilters
         options={filtersOptions}

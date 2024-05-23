@@ -51,15 +51,16 @@ const CalendarFilter: FC<Props> = ({
       options={options}
       filterSelectedOptions
       renderInput={(params) => (
-        <TextField {...params} label={title} size="small" />
+        <TextField {...params} label={title} size="small" variant="filled" />
       )}
       renderTags={(value: string[], getTagProps) =>
         value.map((option: string, index: number) => (
           <Chip
-            variant="filled"
             label={option}
             {...getTagProps({ index })}
             key={option}
+            color="primary"
+            variant="outlined"
           />
         ))
       }

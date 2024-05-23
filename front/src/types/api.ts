@@ -21,9 +21,15 @@ export interface ReadSolutionBody {
 export interface ShortSolutionInfo {
   id: string;
   fileName: string;
+  firstSessionDate: Date;
   createdAt: Date;
 }
 
 export interface SolutionInfo extends ShortSolutionInfo {
   sessions: ShortSessionInfo[];
+}
+
+export interface ImportSolutionResponse {
+  id: string;
+  rowsInserted: number;
 }

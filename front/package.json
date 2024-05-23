@@ -22,7 +22,6 @@
     "@fullcalendar/resource": "6.1.11",
     "@mui/icons-material": "5.15.16",
     "@mui/material": "5.15.16",
-    "@mui/x-date-pickers": "7.4.0",
     "axios": "1.6.8",
     "csv-stringify": "6.4.6",
     "luxon": "3.4.4",
@@ -30,12 +29,14 @@
     "react-dom": "^18.2.0",
     "react-error-boundary": "4.0.13",
     "react-router-dom": "6.23.0",
-    "react-toastify": "10.0.5"
+    "react-toastify": "10.0.5",
+    "chroma-js": "2.4.2"
   },
   "devDependencies": {
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
     "@types/luxon": "3.4.2",
+    "@types/chroma-js": "2.4.4",
     "@typescript-eslint/eslint-plugin": "^7.2.0",
     "@typescript-eslint/parser": "^7.2.0",
     "@vitejs/plugin-react": "^4.2.1",

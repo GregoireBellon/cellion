@@ -51,6 +51,7 @@ const CalendarSpeedDial: FC<Props> = ({
         right: 32,
         ["& > .MuiSpeedDial-fab"]: {
           opacity: open ? 1 : 0.4,
+          backgroundColor: (theme) => theme.palette.primary.main,
         },
       }}
       ariaLabel="speed-dial"

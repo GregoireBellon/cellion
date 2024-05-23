@@ -4,6 +4,7 @@ import {
   SolutionFiltersInfo,
   ReadSolutionBody,
   ShortSolutionInfo,
+  ImportSolutionResponse,
 } from "../../types/api";
 import { ShortSessionInfo } from "../../types/core";
 
@@ -18,7 +19,7 @@ export class SDKMock implements ISDK {
     };
   }
 
-  public async getSolution(
+  public async querySolution(
     _id: string,
     _body: ReadSolutionBody
   ): Promise<ShortSessionInfo[]> {
@@ -64,16 +65,25 @@ export class SDKMock implements ISDK {
         id: i.toString(),
         createdAt: new Date(),
         fileName: `TEST${i}`,
+        firstSessionDate: new Date(),
       });
     }
     return solutions;
   }
 
-  public async importSolution(_file: File): Promise<ShortSolutionInfo> {
+  public async importSolution(_file: File): Promise<ImportSolutionResponse> {
     return {
       id: "35",
+      rowsInserted: 2,
+    };
+  }
+
+  public async getSolution(_solutionId: string): Promise<ShortSolutionInfo> {
+    return {
       createdAt: new Date(),
-      fileName: "testImport",
+      fileName: "test",
+      id: "2",
+      firstSessionDate: new Date(),
     };
   }
 }

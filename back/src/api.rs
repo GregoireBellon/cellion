@@ -15,6 +15,7 @@ pub fn get_scope() -> Scope {
         .service(solution_controller::post_route)
         .service(query_controller::get_availables_filters)
         .service(query_controller::get_availables_solutions)
+        .service(query_controller::get_solution)
         .service(query_controller::get_sessions)
 }
 

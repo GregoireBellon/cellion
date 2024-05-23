@@ -1,3 +1,4 @@
+import { DateTime } from "luxon";
 import { ViewLevel, ViewMode } from "../types/calendar";
 
 export type FullCalendarViewName =
@@ -29,4 +30,11 @@ export function getFullCalendarViewName(
   viewLevel: ViewLevel
 ): FullCalendarViewName {
   return fullCalendarViewDict[viewMode][viewLevel];
+}
+
+export function timestampStrToDateTime(timestamp: string | null) {
+  if (timestamp === null) {
+    return DateTime.invalid("empty");
+  }
+  return DateTime.fromMillis(Number.parseInt(timestamp));
 }

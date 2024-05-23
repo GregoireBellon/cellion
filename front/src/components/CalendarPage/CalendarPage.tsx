@@ -9,11 +9,15 @@ import {
 } from "react";
 import CalendarDrawer from "./CalendarPageDrawer/CalendarDrawer";
 import Calendar from "./CalendarPageBody/Calendar";
-import { Box } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import FullCalendar from "@fullcalendar/react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import sdk from "../../utils/sdk";
-import { SolutionFiltersInfo, ReadSolutionBody } from "../../types/api";
+import {
+  SolutionFiltersInfo,
+  ReadSolutionBody,
+  ShortSolutionInfo,
+} from "../../types/api";
 import {
   CalendarDisplaySettings,
   CalendarSearchParams,
@@ -23,11 +27,11 @@ import {
 } from "../../types/calendar";
 import CalendarSpeedDial from "./CalendarSpeedDial";
 import { stringify } from "csv-stringify/browser/esm/sync";
-import CalendarHeaderToolbar from "./CalendarPageBody/CalendarHeaderToolbar";
-import { DateTime, Interval } from "luxon";
+import { DateTime } from "luxon";
 import { ShortSessionInfo } from "../../types/core";
 import { toast } from "react-toastify";
 import { VisuallyHiddenInput } from "../VisuallyHiddenInput";
+import { timestampStrToDateTime } from "../../utils/dates";
 
 interface Props {
   solutionId: string;
@@ -35,12 +39,22 @@ interface Props {
 
 const CalendarPage: FC<Props> = ({ solutionId }) => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
 
   const fullCalendarRef = useRef<FullCalendar | null>(null);
   const solutionDebounce = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hiddenInputRef = useRef<HTMLInputElement | null>(null);
+  const initialSearchParamFrom = useRef<DateTime>(
+    timestampStrToDateTime(searchParams.get(CalendarSearchParams.FROM))
+  );
 
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [solutionInfo, setSolutionInfo] = useState<ShortSolutionInfo>({
+    createdAt: new Date(),
+    fileName: "",
+    firstSessionDate: new Date(),
+    id: "",
+  });
+
   const [sessions, setSessions] = useState<ShortSessionInfo[]>([]);
   const [solutionFiltersOptions, setSolutionFiltersOptions] =
     useState<SolutionFiltersInfo>({
@@ -74,38 +88,31 @@ const CalendarPage: FC<Props> = ({ solutionId }) => {
         ColorMode.BY_PART,
     }));
 
-  const [from, setFrom] = useState<DateTime>(() => {
-    const searchParamsFrom = searchParams.get(CalendarSearchParams.FROM);
-    if (searchParamsFrom === null) {
-      return DateTime.invalid("empty");
-    }
-    return DateTime.fromMillis(Number.parseInt(searchParamsFrom));
-  });
+  const [from, setFrom] = useState<DateTime>(() =>
+    timestampStrToDateTime(searchParams.get(CalendarSearchParams.FROM))
+  );
 
-  const [to, setTo] = useState<DateTime>(() => {
-    const searchParamsTo = searchParams.get(CalendarSearchParams.TO);
-    if (searchParamsTo === null) {
-      return DateTime.invalid("empty");
-    }
-    return DateTime.fromMillis(Number.parseInt(searchParamsTo));
-  });
+  const [to, setTo] = useState<DateTime>(() =>
+    timestampStrToDateTime(searchParams.get(CalendarSearchParams.TO))
+  );
 
   const [calendarLoading, setCalendarLoading] = useState<boolean>(false);
 
   const initialFullCalendarDate = useMemo(
-    () => (from.isValid ? from.toJSDate() : new Date()),
-    [from]
+    () =>
+      initialSearchParamFrom?.current?.isValid
+        ? initialSearchParamFrom?.current?.toJSDate()
+        : undefined,
+    []
   );
 
-  const intervalStr = useMemo(() => {
-    if (!from.isValid || !to.isValid) {
-      return "";
-    }
-
-    return Interval.fromDateTimes(from, to).toLocaleString(DateTime.DATE_MED, {
-      locale: "fr-FR",
-    });
-  }, [from, to]);
+  const handleFullCalendarDatesSet = useCallback(
+    (activeStart: Date, activeEnd: Date) => {
+      setFrom(DateTime.fromJSDate(activeStart));
+      setTo(DateTime.fromJSDate(activeEnd));
+    },
+    []
+  );
 
   const handleDrawerFiltersChange = useCallback(
     (newSolutionFilters: SolutionFiltersInfo) => {
@@ -120,48 +127,16 @@ const CalendarPage: FC<Props> = ({ solutionId }) => {
     []
   );
 
-  const fetchFilters = useCallback(async (id: string) => {
-    try {
-      const filters = await toast.promise(sdk.getFilters(id), {
-        error: "Impossible de charger les filtres",
-      });
-      setSolutionFiltersOptions(filters);
-      setSolutionFilters({
-        courses: [],
-        groups: [],
-        parts: [],
-        rooms: [],
-        teachers: [],
-      });
-    } catch (err) {
-      console.error((err as Error).message);
-    }
-  }, []);
-
-  const fetchSolution = useCallback((id: string, body: ReadSolutionBody) => {
-    if (solutionDebounce.current !== null) {
-      clearTimeout(solutionDebounce.current);
-    }
-    solutionDebounce.current = setTimeout(async () => {
-      setCalendarLoading(true);
-      try {
-        const newSolution = await toast.promise(sdk.getSolution(id, body), {
-          error: "Impossible de charger la solution",
-        });
-        setSessions(newSolution);
-      } catch (err) {
-        console.error((err as Error).message);
-      }
-      setCalendarLoading(false);
-    }, 50);
-  }, []);
-
   const handlePrevPeriod = useCallback(() => {
     fullCalendarRef.current?.getApi()?.prev();
   }, []);
 
   const handleNextPeriod = useCallback(() => {
     fullCalendarRef.current?.getApi()?.next();
+  }, []);
+
+  const handleImportSolutionClick = useCallback(() => {
+    hiddenInputRef.current?.click();
   }, []);
 
   const handleExportJSONClick = useCallback(() => {
@@ -217,8 +192,56 @@ const CalendarPage: FC<Props> = ({ solutionId }) => {
     URL.revokeObjectURL(href);
   }, [sessions]);
 
-  const handleImportSolutionClick = useCallback(() => {
-    hiddenInputRef.current?.click();
+  const fetchFilters = useCallback(async (id: string) => {
+    try {
+      const filters = await toast.promise(sdk.getFilters(id), {
+        error: "Impossible de charger les filtres",
+      });
+      setSolutionFiltersOptions(filters);
+      setSolutionFilters((oldFilters) => ({
+        courses: oldFilters.courses.filter((c) => filters.courses.includes(c)),
+        groups: oldFilters.groups.filter((g) => filters.groups.includes(g)),
+        parts: oldFilters.parts.filter((p) => filters.parts.includes(p)),
+        rooms: oldFilters.rooms.filter((r) => filters.rooms.includes(r)),
+        teachers: oldFilters.teachers.filter((t) =>
+          filters.teachers.includes(t)
+        ),
+      }));
+    } catch (err) {
+      console.error((err as Error).message);
+    }
+  }, []);
+
+  const fetchSolution = useCallback(async (id: string) => {
+    try {
+      const solution = await toast.promise(sdk.getSolution(id), {
+        error: "Impossible de charger la solution",
+      });
+      setSolutionInfo(solution);
+      if (!initialSearchParamFrom.current?.isValid) {
+        fullCalendarRef.current?.getApi()?.gotoDate(solution.firstSessionDate);
+      }
+    } catch (err) {
+      console.error((err as Error).message);
+    }
+  }, []);
+
+  const querySolution = useCallback((id: string, body: ReadSolutionBody) => {
+    if (solutionDebounce.current !== null) {
+      clearTimeout(solutionDebounce.current);
+    }
+    solutionDebounce.current = setTimeout(async () => {
+      setCalendarLoading(true);
+      try {
+        const newSessions = await toast.promise(sdk.querySolution(id, body), {
+          error: "Impossible de charger le calendrier",
+        });
+        setSessions(newSessions);
+      } catch (err) {
+        console.error((err as Error).message);
+      }
+      setCalendarLoading(false);
+    }, 50);
   }, []);
 
   const handleImportSolution = useCallback(
@@ -242,108 +265,102 @@ const CalendarPage: FC<Props> = ({ solutionId }) => {
     [navigate]
   );
 
-  const handleDrawerDatesChange = useCallback((newDate: DateTime | null) => {
-    if (newDate === null) {
-      return;
-    }
-    fullCalendarRef.current?.getApi()?.gotoDate(newDate.toJSDate());
-  }, []);
-
-  const handleFullCalendarDatesSet = useCallback(
-    (activeStart: Date, activeEnd: Date) => {
-      const fullCalendarFrom = activeStart;
-      const fullCalendarTo = activeEnd;
-
-      setFrom(DateTime.fromJSDate(fullCalendarFrom));
-      setTo(DateTime.fromJSDate(fullCalendarTo));
-    },
-    []
-  );
+  useEffect(() => {
+    void fetchSolution(solutionId);
+  }, [fetchSolution, solutionId]);
 
   useEffect(() => {
-    setSearchParams(() => {
-      const map: string[][] = [];
-      if (from.isValid && to.isValid) {
-        map.push([CalendarSearchParams.FROM, from.toMillis().toString()]);
-        map.push([CalendarSearchParams.TO, to.toMillis().toString()]);
-      }
-      map.push(
-        ...solutionFilters.courses.map((course) => [
-          CalendarSearchParams.COURSE,
-          course,
-        ])
-      );
-      map.push(
-        ...solutionFilters.groups.map((group) => [
-          CalendarSearchParams.GROUP,
-          group,
-        ])
-      );
-      map.push(
-        ...solutionFilters.parts.map((part) => [
-          CalendarSearchParams.PART,
-          part,
-        ])
-      );
-      map.push(
-        ...solutionFilters.rooms.map((room) => [
-          CalendarSearchParams.ROOM,
-          room,
-        ])
-      );
-      map.push(
-        ...solutionFilters.teachers.map((teacher) => [
-          CalendarSearchParams.TEACHER,
-          teacher,
-        ])
-      );
-      map.push([CalendarSearchParams.COLOR_MODE, calendarDisplay.colorMode]);
-      map.push([CalendarSearchParams.VIEW_MODE, calendarDisplay.viewMode]);
-      map.push([CalendarSearchParams.VIEW_LEVEL, calendarDisplay.viewLevel]);
-
-      return new URLSearchParams(map);
-    });
-  }, [from, setSearchParams, solutionFilters, to, calendarDisplay]);
-
-  useEffect(() => {
-    if (solutionId === undefined) {
-      return;
-    }
     void fetchFilters(solutionId);
   }, [fetchFilters, solutionId]);
 
   useEffect(() => {
-    if (solutionId === undefined) {
-      return;
-    }
     const isoFrom = from?.toISO();
     const isoTo = to?.toISO();
     if (!isoFrom || !isoTo) {
       return;
     }
-    fetchSolution(solutionId, { ...solutionFilters, from: isoFrom, to: isoTo });
-  }, [fetchSolution, solutionId, from, solutionFilters, to]);
+    querySolution(solutionId, { ...solutionFilters, from: isoFrom, to: isoTo });
+  }, [querySolution, solutionId, from, solutionFilters, to]);
+
+  useEffect(() => {
+    setSearchParams(
+      () => {
+        const map: string[][] = [];
+        if (from.isValid && to.isValid) {
+          map.push([CalendarSearchParams.FROM, from.toMillis().toString()]);
+          map.push([CalendarSearchParams.TO, to.toMillis().toString()]);
+        }
+        map.push(
+          ...solutionFilters.courses.map((course) => [
+            CalendarSearchParams.COURSE,
+            course,
+          ])
+        );
+        map.push(
+          ...solutionFilters.groups.map((group) => [
+            CalendarSearchParams.GROUP,
+            group,
+          ])
+        );
+        map.push(
+          ...solutionFilters.parts.map((part) => [
+            CalendarSearchParams.PART,
+            part,
+          ])
+        );
+        map.push(
+          ...solutionFilters.rooms.map((room) => [
+            CalendarSearchParams.ROOM,
+            room,
+          ])
+        );
+        map.push(
+          ...solutionFilters.teachers.map((teacher) => [
+            CalendarSearchParams.TEACHER,
+            teacher,
+          ])
+        );
+        map.push([CalendarSearchParams.COLOR_MODE, calendarDisplay.colorMode]);
+        map.push([CalendarSearchParams.VIEW_MODE, calendarDisplay.viewMode]);
+        map.push([CalendarSearchParams.VIEW_LEVEL, calendarDisplay.viewLevel]);
+
+        return new URLSearchParams(map);
+      },
+      { replace: true }
+    );
+  }, [from, setSearchParams, solutionFilters, to, calendarDisplay]);
 
   return (
     <>
-      <Box display="flex" flexGrow={1} flexDirection="column">
-        {/* Calendar title ? */}
-        <Box display="flex" flexDirection="row" flexGrow={1} gap={2}>
-          <CalendarDrawer
-            filtersOptions={solutionFiltersOptions}
-            filters={solutionFilters}
-            onFiltersChange={handleDrawerFiltersChange}
-            date={from}
-            onDateChange={handleDrawerDatesChange}
-            display={calendarDisplay}
-            onDisplayChange={handleDisplayChange}
-          />
-          <Box display="flex" flexDirection="column">
-            <CalendarHeaderToolbar
-              onPrev={handlePrevPeriod}
-              onNext={handleNextPeriod}
-              interval={intervalStr}
+      <Box display="flex" flexGrow={1} flexDirection="column" gap={1}>
+        <Box
+          display="flex"
+          flexDirection="row"
+          justifyContent="space-between"
+          gap={2}
+        >
+          <Box flex={2} />
+          <Box flex={6}>
+            <Typography width={1300} noWrap variant="h4">
+              {solutionInfo.fileName}
+            </Typography>
+          </Box>
+        </Box>
+        <Box display="flex" flexDirection="row" gap={2}>
+          <Box flex={2}>
+            <CalendarDrawer
+              from={from}
+              to={to}
+              onPrevDate={handlePrevPeriod}
+              onNextDate={handleNextPeriod}
+              filtersOptions={solutionFiltersOptions}
+              filters={solutionFilters}
+              onFiltersChange={handleDrawerFiltersChange}
+              display={calendarDisplay}
+              onDisplayChange={handleDisplayChange}
             />
+          </Box>
+          <Box flex={6}>
             <Calendar
               sessions={sessions}
               fullCalendarRef={fullCalendarRef}

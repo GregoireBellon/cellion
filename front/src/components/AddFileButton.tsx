@@ -9,7 +9,7 @@ const AddFileButton: FC = () => {
         position: "fixed",
         bottom: 50,
         right: 50,
-        backgroundColor: (theme) => theme.palette.primary.main,
+        // backgroundColor: (theme) => theme.palette.primary.main,
       }}
       size="large"
     >

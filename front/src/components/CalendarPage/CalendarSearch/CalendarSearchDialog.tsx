@@ -16,8 +16,8 @@ import {
   DialogTitle,
   TextField,
 } from "@mui/material";
-import { ShortSolutionInfo } from "../../types/api";
-import sdk from "../../utils/sdk";
+import { ShortSolutionInfo } from "../../../types/api";
+import sdk from "../../../utils/sdk";
 import { Search } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
@@ -63,8 +63,8 @@ const CalendarSearchDialog: FC<Props> = ({ open, onClose }) => {
   const handleOptionClick = useCallback(
     (_: SyntheticEvent<Element, Event>, value: ShortSolutionInfo | string) => {
       if (typeof value !== "string") {
-        navigate(`/calendar/${value.id}`);
         handleClose();
+        navigate(`/calendar/${value.id}`);
       }
     },
     [handleClose, navigate]
@@ -118,7 +118,9 @@ const CalendarSearchDialog: FC<Props> = ({ open, onClose }) => {
     <Dialog
       open={open}
       onClose={handleClose}
-      PaperProps={{ sx: { position: "absolute", top: 50 } }}
+      PaperProps={{
+        sx: { position: "absolute", top: 50, borderRadius: "5px" },
+      }}
     >
       <DialogTitle>Rechercher une solution</DialogTitle>
       <DialogContent>

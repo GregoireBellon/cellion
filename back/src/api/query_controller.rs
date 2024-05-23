@@ -1,9 +1,11 @@
 use actix_web::{
-    error::{self, ErrorBadRequest},
+    error::{self, ErrorBadRequest, ErrorInternalServerError, ErrorNotFound},
     get, post, web, Error as ActixError, HttpResponse, Responder,
 };
 use chrono::NaiveDateTime;
-use diesel::{result::Error as DieselError, RunQueryDsl};
+use diesel::{
+    query_dsl::methods::FilterDsl, result::Error as DieselError, ExpressionMethods, RunQueryDsl,
+};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -52,6 +54,29 @@ pub async fn get_availables_solutions(
     match result {
         Ok(filters) => Ok(HttpResponse::Ok().json(filters)),
         Err(err) => Err(ErrorBadRequest(err)),
+    }
+}
+
+#[get("/{solution_id}")]
+pub async fn get_solution(
+    info: web::Path<i32>,
+    pool: web::Data<DbPool>,
+) -> Result<impl Responder, ActixError> {
+    let request_solution_id = info.into_inner();
+    let result: Result<Solution, DieselError> = do_with_db(pool, move |conn| {
+        schema::solutions::table
+            .filter(schema::solutions::id.eq(request_solution_id))
+            .get_result::<Solution>(conn)
+    })
+    .await?;
+
+    match result {
+        Ok(filters) => Ok(HttpResponse::Ok().json(filters)),
+        Err(DieselError::NotFound) => Err(ErrorNotFound(format!(
+            "Solution {} not found",
+            request_solution_id
+        ))),
+        Err(err) => Err(ErrorInternalServerError(err)),
     }
 }
 

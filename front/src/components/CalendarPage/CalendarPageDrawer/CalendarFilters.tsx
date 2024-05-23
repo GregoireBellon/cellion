@@ -3,6 +3,7 @@ import {
   AccordionDetails,
   AccordionSummary,
   Box,
+  Paper,
   Typography,
 } from "@mui/material";
 import { FC, useCallback } from "react";
@@ -88,50 +89,52 @@ const CalendarFilters: FC<Props> = ({ options, value, onChange }) => {
   }, [value, onChange]);
 
   return (
-    <Accordion defaultExpanded sx={{ p: 1 }}>
-      <AccordionSummary expandIcon={<ExpandMore />}>
-        <Typography variant="h4">Filtres</Typography>
-      </AccordionSummary>
-      <AccordionDetails>
-        <Box display="flex" flexDirection="column" gap={3}>
-          <CalendarFilter
-            title="Cours"
-            options={options.courses}
-            value={value.courses}
-            onChange={handleCoursesChange}
-            onClear={handleCoursesClear}
-          />
-          <CalendarFilter
-            title="Catégories"
-            options={options.parts}
-            value={value.parts}
-            onChange={handlePartsChange}
-            onClear={handlePartsClear}
-          />
-          <CalendarFilter
-            title="Salles"
-            options={options.rooms}
-            value={value.rooms}
-            onChange={handleRoomsChange}
-            onClear={handleRoomsClear}
-          />
-          <CalendarFilter
-            title="Groupes"
-            options={options.groups}
-            value={value.groups}
-            onChange={handleGroupsChange}
-            onClear={handleGroupsClear}
-          />
-          <CalendarFilter
-            title="Enseignants"
-            options={options.teachers}
-            value={value.teachers}
-            onChange={handleTeachersChange}
-            onClear={handleTeachersClear}
-          />
-        </Box>
-      </AccordionDetails>
-    </Accordion>
+    <Paper elevation={1} sx={{ borderRadius: 2, overflow: "hidden" }}>
+      <Accordion defaultExpanded>
+        <AccordionSummary expandIcon={<ExpandMore />}>
+          <Typography variant="h5">Filtres</Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Box display="flex" flexDirection="column" gap={3}>
+            <CalendarFilter
+              title="Cours"
+              options={options.courses}
+              value={value.courses}
+              onChange={handleCoursesChange}
+              onClear={handleCoursesClear}
+            />
+            <CalendarFilter
+              title="Catégories"
+              options={options.parts}
+              value={value.parts}
+              onChange={handlePartsChange}
+              onClear={handlePartsClear}
+            />
+            <CalendarFilter
+              title="Salles"
+              options={options.rooms}
+              value={value.rooms}
+              onChange={handleRoomsChange}
+              onClear={handleRoomsClear}
+            />
+            <CalendarFilter
+              title="Groupes"
+              options={options.groups}
+              value={value.groups}
+              onChange={handleGroupsChange}
+              onClear={handleGroupsClear}
+            />
+            <CalendarFilter
+              title="Enseignants"
+              options={options.teachers}
+              value={value.teachers}
+              onChange={handleTeachersChange}
+              onClear={handleTeachersClear}
+            />
+          </Box>
+        </AccordionDetails>
+      </Accordion>
+    </Paper>
   );
 };
 

@@ -19,5 +19,31 @@ export default defineConfig(({ mode }) => {
         }),
       },
     },
+    // https://github.com/vitejs/vite/discussions/9440#discussioncomment-5913798
+    build: {
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes("node_modules")) {
+              return id
+                .toString()
+                .split("node_modules/")[1]
+                .split("/")[0]
+                .toString();
+            }
+          },
+        },
+      },
+    },
+    preview: {
+      proxy: {
+        "/api": {
+          target: "http://localhost:5000",
+          changeOrigin: true,
+          secure: false,
+          rewrite: (path) => path.replace(/^\/api/, ""),
+        },
+      },
+    },
   };
 });

@@ -3,7 +3,6 @@ services:
     image: ghcr.io/gregoirebellon/cellion-back:main
     env_file:
       - ./back/.env
-
   front:
     image: ghcr.io/gregoirebellon/cellion-front:main
     environment:

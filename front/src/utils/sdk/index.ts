@@ -1,4 +1,5 @@
 import {
+  ImportSolutionResponse,
   ReadSolutionBody,
   ShortSolutionInfo,
   SolutionFiltersInfo,
@@ -10,11 +11,12 @@ import { SDK } from "./sdk";
 export interface ISDK {
   getFilters(solutionId: string): Promise<SolutionFiltersInfo>;
   listSolutions(): Promise<ShortSolutionInfo[]>;
-  getSolution(
+  querySolution(
     solutionId: string,
     body: ReadSolutionBody
   ): Promise<ShortSessionInfo[]>;
-  importSolution(file: File): Promise<ShortSolutionInfo>;
+  importSolution(file: File): Promise<ImportSolutionResponse>;
+  getSolution(solutionId: string): Promise<ShortSolutionInfo>;
 }
 
 // const sdk: ISDK = new SDKMock();
