@@ -49,7 +49,8 @@ impl CalendarHandler {
         self.sequence_week_association_table
             .as_ref()
             .and_then(|table| table.get((week - 1) as usize).copied())
-            .unwrap_or(week - 1)
+            .unwrap_or(week)
+            - 1
     }
 
     pub fn extract_session_date(
