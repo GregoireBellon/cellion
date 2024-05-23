@@ -64,6 +64,8 @@ jobs:
       - name: downcase back image name
         run: |
           echo "BACK_IMAGE=${BACK_IMAGE,,}" >>${GITHUB_ENV}
+      - name: Checkout repository
+        uses: actions/checkout@v4
       - name: Run playbook
         uses: dawidd6/action-ansible-playbook@v2
         with:
