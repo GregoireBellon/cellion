@@ -1,8 +1,6 @@
 use std::{str::FromStr, usize};
 
-use chrono::{
-    Datelike, Days, FixedOffset, Local, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc,
-};
+use chrono::{Datelike, Days, Local, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc};
 use log::warn;
 
 use super::xml_types::XmlCalendar;
