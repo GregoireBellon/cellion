@@ -41,6 +41,7 @@ jobs:
   #   image-name: "${{github.repository}}-back"
 
   deploy:
+    environment: Dev
     permissions:
       contents: read
       packages: write
