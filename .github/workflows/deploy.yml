@@ -39,8 +39,8 @@ on:
 
 env:
   DOCKER_REGISTRY: ghcr.io
-  FRONT_IMAGE: ${{github.repository}}-front
-  BACK_IMAGE: ${{github.repository}}-back
+  FRONT_IMAGE: ${{github.repository}}-front:${{ github.ref_name }}
+  BACK_IMAGE: ${{github.repository}}-back:${{ github.ref_name }}
   DB_NAME: ${{ inputs.db-name }}
   DB_FOLDER: ${{ inputs.db-folder }}
   BACK_LOG_LEVEL: ${{ inputs.api-log-level }}
