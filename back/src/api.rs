@@ -4,7 +4,7 @@ use actix_web::{web, Scope};
 use diesel::r2d2::{self, ManageConnection, PooledConnection};
 
 mod buffer_handler;
-mod date_service;
+mod calendar_handler;
 mod query_controller;
 mod query_service;
 mod solution_controller;
