@@ -10,7 +10,7 @@
   tasks:
     - name: Start the docker-compose
       community.docker.docker_compose_v2:
-        pull: true
+        pull: "always"
         recreate: "always"
         project_name: cellion
         definition:
