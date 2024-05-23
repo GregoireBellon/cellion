@@ -1,8 +1,6 @@
 use std::error::Error;
 
-use chrono::{DateTime, Datelike, Local, TimeZone, Utc};
 use diesel::{self, ExpressionMethods, QueryResult, RunQueryDsl, SqliteConnection};
-use log::warn;
 use uuid::Uuid;
 
 use crate::models::{
@@ -15,7 +13,7 @@ use crate::models::{
 
 use super::{
     buffer_handler::BufferHandler,
-    date_service::{extract_session_date, extract_starting_date},
+    calendar_handler::CalendarHandler,
     xml_types::{
         XmlCalendar, XmlClass, XmlCourse, XmlGroupClasses, XmlGroupStudents, XmlPart, XmlRoom,
         XmlSession, XmlSolutionClass, XmlSolutionClassRooms, XmlSolutionClassTeachers,
@@ -28,9 +26,7 @@ pub struct SolutionInserter<'a> {
     solution_id: i32,
 
     buffer_handler: BufferHandler,
-
-    starting_date: DateTime<Utc>,
-    slot_duration: u16,
+    calendar_data_handler: CalendarHandler,
 }
 
 impl<'a> SolutionInserter<'a> {
@@ -49,11 +45,7 @@ impl<'a> SolutionInserter<'a> {
             solution_id: solution_id,
 
             buffer_handler: BufferHandler::new(),
-
-            starting_date: Utc
-                .with_ymd_and_hms(Local::now().year(), 1, 1, 0, 0, 0)
-                .unwrap(),
-            slot_duration: 1,
+            calendar_data_handler: CalendarHandler::new(),
         });
     }
 
@@ -65,20 +57,16 @@ impl<'a> SolutionInserter<'a> {
         self.buffer_handler.insert_all_into_db(self.conn)
     }
 
-    pub fn add_calendar(&mut self, calendar: XmlCalendar) -> QueryResult<usize> {
-        // Minutes in a day divided by the number of slots in the day
-        self.slot_duration = ((60 * 24) / calendar.slots.nr) as u16;
-
-        let extracted_date = extract_starting_date(calendar.year, calendar.starting_week, &Utc);
-
-        match extracted_date {
-            Some(extracted) => self.starting_date = extracted,
-            None => warn!("The starting date described by calendar is not valid !"),
-        }
+    pub fn add_calendar(&mut self, xml_calendar: XmlCalendar) -> QueryResult<usize> {
+        self.calendar_data_handler
+            .register_xml_calendar(&xml_calendar);
 
         diesel::update(schema::solutions::table)
             .filter(schema::solutions::id.eq(self.solution_id))
-            .set(schema::solutions::slot_duration.eq(self.slot_duration as i32))
+            .set(
+                schema::solutions::slot_duration
+                    .eq(self.calendar_data_handler.slot_duration as i32),
+            )
             .execute(self.conn)
     }
 
@@ -141,7 +129,7 @@ impl<'a> SolutionInserter<'a> {
 
     pub fn add_session(&mut self, session: XmlSession) -> Result<(), String> {
         session
-            .into_db_entry(self.solution_id, &self.starting_date, self.slot_duration)
+            .into_db_entry(self.solution_id, &self.calendar_data_handler)
             .map(|s| self.buffer_handler.sessions_to_insert.push(s))?;
 
         session.teachers.map(|teachs| {
@@ -334,37 +322,27 @@ impl XmlSession {
     fn into_db_entry(
         &self,
         given_solution_id: i32,
-        starting_date: &DateTime<Utc>,
-        slot_duration: u16,
+        calendar_handler: &CalendarHandler,
     ) -> Result<Session, String> {
-        self.extract_date(starting_date, slot_duration)
+        if self.starting_slot.is_none() {
+            return Err(String::from("This session doesn't have any date."));
+        }
+
+        let starting_slot = self.starting_slot.as_ref().unwrap();
+
+        calendar_handler
+            .extract_session_date(
+                starting_slot.daily_slot,
+                starting_slot.week,
+                starting_slot.day,
+            )
             .map(|date| Session {
                 solution_id: given_solution_id,
                 uuid: Uuid::new_v4().to_string(),
                 class_id: self.class.to_string(),
                 rank: self.rank,
-                starting_date: date.naive_utc(),
+                starting_date: date,
             })
-            .ok_or(String::from("La date est invalide"))
-    }
-
-    fn extract_date(
-        &self,
-        starting_date: &DateTime<Utc>,
-        slot_duration: u16,
-    ) -> Option<DateTime<Utc>> {
-        if self.starting_slot.is_none() {
-            return None;
-        }
-
-        let starting_slot = self.starting_slot.as_ref().unwrap();
-
-        return extract_session_date(
-            starting_date,
-            slot_duration,
-            starting_slot.daily_slot,
-            starting_slot.week,
-            starting_slot.day,
-        );
+            .ok_or(String::from("The date is invalid"))
     }
 }
