@@ -53,7 +53,7 @@ env:
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
+    environment: Dev
     permissions:
       contents: read
       packages: write
