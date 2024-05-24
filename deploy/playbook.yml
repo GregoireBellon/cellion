@@ -35,4 +35,16 @@
                   - "{{ cellion_host }}:{{ cellion_port }}:80"
                 depends_on:
                   - back
+        register: output
+        
+    - name: Show results
+      ansible.builtin.debug:
+        var: output
+
+    - name: Verify that web and db services are running
+      ansible.builtin.assert:
+        that:
+          - "output.services.web.flask_web_1.state.running"
+          - "output.services.db.flask_db_1.state.running"
+
               
