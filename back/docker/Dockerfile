@@ -15,6 +15,8 @@ RUN apk add --no-cache sqlite musl
 
 WORKDIR /usr/src/app
 
+RUN mkdir data
+
 COPY --from=build /usr/src/build/target/release/back ./app
 
 EXPOSE 8080
