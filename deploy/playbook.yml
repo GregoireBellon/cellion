@@ -25,9 +25,8 @@
                 environment:
                   - "DATABASE_URL={{ cellion_db_name }}"
                   - "RUST_LOG={{ cellion_back_log_level }}"
-                  - RUST_BACKTRACE=1
-                volumes:
-                  - "{{ cellion_db_folder }}/{{ cellion_db_name }}:/usr/src/app/{{ cellion_db_name }}"
+                # volumes:
+                #   - "{{ cellion_db_folder }}/{{ cellion_db_name }}:/usr/src/app/{{ cellion_db_name }}"
               front:
                 image: "{{ cellion_docker_registry }}/{{ cellion_docker_front_image }}"
                 environment:

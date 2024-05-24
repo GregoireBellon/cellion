@@ -61,10 +61,10 @@ jobs:
       id-token: write
 
     steps:
-      - name: downcase front image name
+      - name: Downcase front image name
         run: |
           echo "FRONT_IMAGE=${FRONT_IMAGE,,}" >>${GITHUB_ENV}
-      - name: downcase back image name
+      - name: Downcase back image name
         run: |
           echo "BACK_IMAGE=${BACK_IMAGE,,}" >>${GITHUB_ENV}
       - name: Checkout repository
