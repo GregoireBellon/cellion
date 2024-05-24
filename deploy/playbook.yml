@@ -3,9 +3,9 @@
   hosts: all
   vars_files:
     - vars.yml
-  # roles:
-  #   - {role: geerlingguy.pip, become: true}
-  #   - {role: geerlingguy.docker, become: true}
+  roles:
+    - {role: geerlingguy.pip, become: true}
+    - {role: geerlingguy.docker, become: true}
   
   tasks:
     - name: Logout from ghcr to be able to pull public image

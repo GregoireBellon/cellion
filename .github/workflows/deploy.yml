@@ -39,7 +39,6 @@ env:
   BACK_IMAGE_NAME: ${{ inputs.back-image-name }}
   BACK_IMAGE_TAG: ${{ inputs.back-image-tag }}
   SERVER_IP: ${{ secrets.server-ip }}
-  SSH_PRIVATE_KEY: ${{ secrets.ssh-private-key }}
   ANSIBLE_USER: ${{ secrets.ansible-user }}
 
 jobs:

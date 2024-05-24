@@ -2,8 +2,7 @@ name: On push
 
 on:
   push:
-    # branches: ["main"]
-    branches: ["dev-ci"]
+    branches: ["main"]
 
 jobs:
   test-front:
@@ -12,33 +11,33 @@ jobs:
   test-back:
     uses: ./.github/workflows/test-back.yml
 
-  # publish-front:
-  #   permissions:
-  #     contents: read
-  #     packages: write
-  #     attestations: write
-  #     id-token: write
+  publish-front:
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
 
-  #   needs: [test-front, test-back]
-  #   uses: ./.github/workflows/publish-docker.yml
-  #   with:
-  #     context: "front"
-  #     file: "front/docker/Dockerfile"
-  #     image-name: "${{github.repository}}-front"
+    needs: [test-front, test-back]
+    uses: ./.github/workflows/publish-docker.yml
+    with:
+      context: "front"
+      file: "front/docker/Dockerfile"
+      image-name: "${{github.repository}}-front"
 
-  # publish-back:
-  #   permissions:
-  #     contents: read
-  #     packages: write
-  #     attestations: write
-  #     id-token: write
+  publish-back:
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
 
-  #   needs: [test-front, test-back]
-  #   uses: ./.github/workflows/publish-docker.yml
-  #   with:
-  #     context: "back"
-  #     file: "back/docker/Dockerfile"
-  #     image-name: "${{github.repository}}-back"
+    needs: [test-front, test-back]
+    uses: ./.github/workflows/publish-docker.yml
+    with:
+      context: "back"
+      file: "back/docker/Dockerfile"
+      image-name: "${{github.repository}}-back"
 
   deploy:
     permissions:
@@ -47,7 +46,7 @@ jobs:
       attestations: write
       id-token: write
 
-    # needs: [publish-front, publish-back]
+    needs: [publish-front, publish-back]
     uses: ./.github/workflows/deploy.yml
     secrets:
       ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
