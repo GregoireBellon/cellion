@@ -55,10 +55,16 @@ jobs:
     steps:
       - name: Downcase front image name
         run: |
-          echo "FRONT_IMAGE=${FRONT_IMAGE,,}" >>${GITHUB_ENV}
+          echo "FRONT_IMAGE_NAME=${FRONT_IMAGE_NAME,,}" >>${GITHUB_ENV}
       - name: Downcase back image name
         run: |
-          echo "BACK_IMAGE=${BACK_IMAGE,,}" >>${GITHUB_ENV}
+          echo "BACK_IMAGE_NAME=${BACK_IMAGE_NAME,,}" >>${GITHUB_ENV}
+      - name: Downcase front image tag
+        run: |
+          echo "FRONT_IMAGE_TAG=${FRONT_IMAGE_TAG,,}" >>${GITHUB_ENV}
+      - name: Downcase back image tag
+        run: |
+          echo "BACK_IMAGE_TAG=${BACK_IMAGE_TAG,,}" >>${GITHUB_ENV}
       - name: Checkout repository
         uses: actions/checkout@v4
       - name: Run playbook
