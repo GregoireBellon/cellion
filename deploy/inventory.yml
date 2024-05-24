@@ -1,0 +1,5 @@
+all:
+  hosts:
+    server1:
+      ansible_host: "{{ cellion_server }}"
+      ansible_user: "{{ ansible_user }}"

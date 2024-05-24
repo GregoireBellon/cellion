@@ -3,4 +3,3 @@ dockerignore
 docker
 target
 .env*
-val.db

@@ -1,0 +1,77 @@
+on:
+  workflow_call:
+    secrets:
+      ssh-private-key:
+        description: "Ansible user private key"
+        required: true
+      server-ip:
+        description: "Deployment server ip"
+        required: true
+      ansible-user:
+        description: "Ansible username"
+        required: true
+    inputs:
+      front-image-name:
+        description: "The front image name"
+        required: true
+        type: string
+      front-image-tag:
+        description: "The front image tag"
+        required: true
+        type: string
+      back-image-name:
+        description: "The back image name"
+        required: true
+        type: string
+      back-image-tag:
+        description: "The back image tag"
+        required: true
+        type: string
+      docker-registry:
+        description: "The docker registry"
+        required: true
+        type: string
+
+env:
+  DOCKER_REGISTRY: ${{ inputs.docker-registry }}
+  FRONT_IMAGE_NAME: ${{ inputs.front-image-name }}
+  FRONT_IMAGE_TAG: ${{ inputs.front-image-tag }}
+  BACK_IMAGE_NAME: ${{ inputs.back-image-name }}
+  BACK_IMAGE_TAG: ${{ inputs.back-image-tag }}
+  SERVER_IP: ${{ secrets.server-ip }}
+  ANSIBLE_USER: ${{ secrets.ansible-user }}
+
+jobs:
+  deploy:
+    environment: Dev
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+
+    steps:
+      - name: Downcase front image name
+        run: |
+          echo "FRONT_IMAGE_NAME=${FRONT_IMAGE_NAME,,}" >>${GITHUB_ENV}
+      - name: Downcase back image name
+        run: |
+          echo "BACK_IMAGE_NAME=${BACK_IMAGE_NAME,,}" >>${GITHUB_ENV}
+      - name: Downcase front image tag
+        run: |
+          echo "FRONT_IMAGE_TAG=${FRONT_IMAGE_TAG,,}" >>${GITHUB_ENV}
+      - name: Downcase back image tag
+        run: |
+          echo "BACK_IMAGE_TAG=${BACK_IMAGE_TAG,,}" >>${GITHUB_ENV}
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Run playbook
+        uses: dawidd6/action-ansible-playbook@v2
+        with:
+          directory: ./deploy
+          playbook: playbook.yml
+          key: ${{secrets.ssh-private-key}}
+          requirements: requirements.yml
+          options: |
+            --inventory inventory.yml
