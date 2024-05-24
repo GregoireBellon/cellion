@@ -2,6 +2,8 @@ import {
   Autocomplete,
   AutocompleteChangeDetails,
   AutocompleteChangeReason,
+  AutocompleteRenderGetTagProps,
+  AutocompleteRenderInputParams,
   Chip,
   TextField,
 } from "@mui/material";
@@ -42,6 +44,27 @@ const CalendarFilter: FC<Props> = ({
     [onClear, onChange, value]
   );
 
+  const handleRenderInput = useCallback(
+    (params: AutocompleteRenderInputParams) => (
+      <TextField {...params} label={title} size="small" variant="filled" />
+    ),
+    [title]
+  );
+
+  const handleRenderTags = useCallback(
+    (value: string[], getTagProps: AutocompleteRenderGetTagProps) =>
+      value.map((option: string, index: number) => (
+        <Chip
+          label={option}
+          {...getTagProps({ index })}
+          key={option}
+          color="primary"
+          variant="outlined"
+        />
+      )),
+    []
+  );
+
   return (
     <Autocomplete
       multiple
@@ -50,20 +73,8 @@ const CalendarFilter: FC<Props> = ({
       openOnFocus
       options={options}
       filterSelectedOptions
-      renderInput={(params) => (
-        <TextField {...params} label={title} size="small" variant="filled" />
-      )}
-      renderTags={(value: string[], getTagProps) =>
-        value.map((option: string, index: number) => (
-          <Chip
-            label={option}
-            {...getTagProps({ index })}
-            key={option}
-            color="primary"
-            variant="outlined"
-          />
-        ))
-      }
+      renderInput={handleRenderInput}
+      renderTags={handleRenderTags}
       value={value}
       onChange={handleAutoCompleteChange}
       popupIcon={null}

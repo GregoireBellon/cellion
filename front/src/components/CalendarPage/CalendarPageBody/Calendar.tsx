@@ -135,7 +135,11 @@ const Calendar: FC<Props> = ({
 
   return (
     <>
-      <LinearProgress sx={{ opacity: loading ? undefined : 0 }} />
+      {loading ? (
+        <LinearProgress sx={{ height: 3 }} />
+      ) : (
+        <Box sx={{ height: 3 }} />
+      )}
       <EventDetailsDialog
         open={popperOpen}
         onClose={handlePopperClose}
@@ -227,7 +231,6 @@ const Calendar: FC<Props> = ({
             },
           ]}
           height="auto"
-          stickyHeaderDates
           ref={fullCalendarRef}
           initialDate={initialFrom}
           eventMaxStack={view.includes("Day") ? 10 : 5}

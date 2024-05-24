@@ -10,6 +10,7 @@ import {
   Autocomplete,
   AutocompleteCloseReason,
   AutocompleteInputChangeReason,
+  AutocompleteRenderInputParams,
   Box,
   Dialog,
   DialogContent,
@@ -39,6 +40,30 @@ const CalendarSearchDialog: FC<Props> = ({ open, onClose }) => {
   const [loading, setLoading] = useState<boolean>(false);
 
   const autoCompleteRef = useRef<HTMLDivElement>(null);
+
+  const handleRenderInput = useCallback(
+    (params: AutocompleteRenderInputParams) => (
+      <TextField
+        {...params}
+        InputProps={{
+          ...params.InputProps,
+          placeholder: "Rechercher une solution",
+          type: "search",
+          startAdornment: <Search />,
+        }}
+      />
+    ),
+    []
+  );
+
+  const handleRenderOption = useCallback(
+    (props: React.HTMLAttributes<HTMLLIElement>, option: ShortSolutionInfo) => (
+      <Box {...props} key={option.id} component="li">
+        {option.fileName}
+      </Box>
+    ),
+    []
+  );
 
   const handleClose = useCallback(() => {
     onClose();
@@ -143,22 +168,8 @@ const CalendarSearchDialog: FC<Props> = ({ open, onClose }) => {
           onChange={handleOptionClick}
           inputValue={autoCompleteInput}
           onInputChange={handleAutoCompleteInputChange}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              InputProps={{
-                ...params.InputProps,
-                placeholder: "Rechercher une solution",
-                type: "search",
-                startAdornment: <Search />,
-              }}
-            />
-          )}
-          renderOption={(props, option) => (
-            <Box {...props} key={option.id} component="li">
-              {option.fileName}
-            </Box>
-          )}
+          renderInput={handleRenderInput}
+          renderOption={handleRenderOption}
         />
       </DialogContent>
     </Dialog>
