@@ -25,8 +25,8 @@
               environment:
                 - DATABASE_URL=/usr/src/app/val.db
                 - RUST_LOG="{{ cellion_back_log_level }}"
-              volumes:
-                - sqlite:/usr/src/app/val.db
+              # volumes:
+              #   - sqlite:/usr/src/app/val.db
             front:
               image: "{{ cellion_docker_registry }}/{{ cellion_docker_front_image_name }}:{{ cellion_docker_front_image_tag }}"
               environment:
@@ -35,7 +35,7 @@
                 - "{{ cellion_host }}:{{ cellion_port }}:80"
               depends_on:
                 - back
-          volumes:
-            sqlite:
+          # volumes:
+          #   sqlite:
 
               

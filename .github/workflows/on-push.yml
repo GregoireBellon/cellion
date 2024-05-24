@@ -2,7 +2,7 @@ name: On push
 
 on:
   push:
-    branches: ["main"]
+    branches: ["main", "debug-ci"]
 
 jobs:
   test-front:
