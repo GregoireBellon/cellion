@@ -21,18 +21,20 @@
         definition:
             services:
               back:
-                image: "{{ cellion_docker_registry }}/{{ cellion_docker_back_image }}"
+                image: "{{ cellion_docker_registry }}/{{ cellion_docker_back_image_name }}:{{ cellion_docker_back_image_tag }}"
                 environment:
-                  - "DATABASE_URL={{ cellion_db_name }}"
+                  - "DATABASE_URL=/usr/src/app/val.db"
                   - "RUST_LOG={{ cellion_back_log_level }}"
-                # volumes:
-                #   - "{{ cellion_db_folder }}/{{ cellion_db_name }}:/usr/src/app/{{ cellion_db_name }}"
+                volumes:
+                  - "sqlite:/usr/src/app/val.db"
               front:
-                image: "{{ cellion_docker_registry }}/{{ cellion_docker_front_image }}"
+                image: "{{ cellion_docker_registry }}/{{ cellion_docker_front_image_name }}:{{ cellion_docker_front_image_tag }}"
                 environment:
                   - BACK_REF=back
                 ports:
                   - "{{ cellion_host }}:{{ cellion_port }}:80"
                 depends_on:
                   - back
+            volumes:
+              sqlite:
               

@@ -27,7 +27,7 @@ fn run_migrations(
 async fn main() -> std::io::Result<()> {
     dotenvy::dotenv().ok();
     env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
-    info!("{}", std::env::var("DATABASE_URL").expect(""));
+
     let manager = r2d2::ConnectionManager::<SqliteConnection>::new(
         std::env::var("DATABASE_URL").expect("Please fill the \"DATABASE_URL\" env variable "),
     );

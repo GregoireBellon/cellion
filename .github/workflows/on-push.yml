@@ -53,8 +53,9 @@ jobs:
       ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
       server-ip: ${{ secrets.SERVER_IP }}
       ansible-user: ${{ secrets.ANSIBLE_USER }}
-    # with:
-    #   db-name:
-    #   db-folder:
-    #   api-log-level:
-    #   port:
+    with:
+      front-image-name: "${{github.repository}}-front"
+      front-image-tag: "${{ github.ref_name }}"
+      back-image-name: "${{github.repository}}-back"
+      back-image-tag: "${{ github.ref_name }}"
+      docker-registry: "ghcr.io"

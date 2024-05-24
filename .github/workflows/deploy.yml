@@ -11,41 +11,33 @@ on:
         description: "Ansible username"
         required: true
     inputs:
-      db-name:
-        description: "The name of the SQLight db"
-        default: "val.db"
-        required: false
+      front-image-name:
+        description: "The front image name"
+        required: true
         type: string
-      db-folder:
-        description: "The folder of the SQLight on the host"
-        default: "/opt/cellion"
-        required: false
+      front-image-tag:
+        description: "The front image tag"
+        required: true
         type: string
-      api-log-level:
-        description: "Log level of the api"
-        default: "info"
-        required: false
+      back-image-name:
+        description: "The back image name"
+        required: true
         type: string
-      port:
-        description: "Port"
-        default: 8080
-        required: false
-        type: number
-      host:
-        description: "Host"
-        default: "0.0.0.0"
-        required: false
+      back-image-tag:
+        description: "The back image tag"
+        required: true
+        type: string
+      docker-registry:
+        description: "The docker registry"
+        required: true
         type: string
 
 env:
-  DOCKER_REGISTRY: ghcr.io
-  FRONT_IMAGE: ${{github.repository}}-front:${{ github.ref_name }}
-  BACK_IMAGE: ${{github.repository}}-back:${{ github.ref_name }}
-  DB_NAME: ${{ inputs.db-name }}
-  DB_FOLDER: ${{ inputs.db-folder }}
-  BACK_LOG_LEVEL: ${{ inputs.api-log-level }}
-  PORT: ${{ inputs.port }}
-  HOST: ${{ inputs.host }}
+  DOCKER_REGISTRY: ${{ inputs.docker-registry }}
+  FRONT_IMAGE_NAME: ${{ inputs.front-image-name }}
+  FRONT_IMAGE_TAG: ${{ inputs.front-image-tag }}
+  BACK_IMAGE_NAME: ${{ inputs.back-image-name }}
+  BACK_IMAGE_TAG: ${{ inputs.back-image-name }}
   SERVER_IP: ${{ secrets.server-ip }}
   SSH_PRIVATE_KEY: ${{ secrets.ssh-private-key }}
   ANSIBLE_USER: ${{ secrets.ansible-user }}
