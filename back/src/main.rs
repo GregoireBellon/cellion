@@ -4,8 +4,10 @@ use actix_web::{get, middleware::Logger, web, App, HttpResponse, HttpServer, Res
 use diesel::{r2d2, sqlite::Sqlite, SqliteConnection};
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use log::{error, info};
+
 mod api;
 mod models;
+mod xml_parsing;
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!();
 

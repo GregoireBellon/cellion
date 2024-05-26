@@ -8,9 +8,8 @@ mod calendar_handler;
 mod query_controller;
 mod query_service;
 mod solution_controller;
-mod solution_service;
+pub mod solution_service;
 mod solutions_dto;
-mod xml_types;
 
 pub fn get_scope() -> Scope {
     actix_web::web::scope("/solutions")
