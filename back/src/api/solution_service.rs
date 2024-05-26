@@ -1,5 +1,3 @@
-use std::error::Error;
-
 use diesel::{self, ExpressionMethods, QueryResult, RunQueryDsl, SqliteConnection};
 use uuid::Uuid;
 
@@ -11,15 +9,13 @@ use crate::models::{
     schema::{self},
 };
 
-use super::{
-    buffer_handler::BufferHandler,
-    calendar_handler::CalendarHandler,
-    xml_types::{
-        XmlCalendar, XmlClass, XmlCourse, XmlGroupClasses, XmlGroupStudents, XmlPart, XmlRoom,
-        XmlSession, XmlSolutionClass, XmlSolutionClassRooms, XmlSolutionClassTeachers,
-        XmlSolutionGroup, XmlStudent, XmlTeacher,
-    },
+use crate::xml_parsing::types::{
+    XmlCalendar, XmlClass, XmlCourse, XmlGroupClasses, XmlGroupStudents, XmlPart, XmlRoom,
+    XmlSession, XmlSolutionClass, XmlSolutionClassRooms, XmlSolutionClassTeachers,
+    XmlSolutionGroup, XmlStudent, XmlTeacher,
 };
+
+use super::{buffer_handler::BufferHandler, calendar_handler::CalendarHandler};
 
 pub struct SolutionInserter<'a> {
     conn: &'a mut SqliteConnection,
@@ -160,7 +156,7 @@ impl<'a> SolutionInserter<'a> {
         Ok(())
     }
 
-    pub fn add_course(&mut self, course: XmlCourse) -> Result<(), Box<dyn Error>> {
+    pub fn add_course(&mut self, course: XmlCourse) {
         self.buffer_handler
             .courses_to_insert
             .push(course.into_db_entry(self.solution_id));
@@ -183,8 +179,6 @@ impl<'a> SolutionInserter<'a> {
                     self.buffer_handler.on_add_callback(self.conn);
                 });
         });
-
-        return Ok(());
     }
 }
 
