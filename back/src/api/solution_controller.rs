@@ -12,7 +12,7 @@ use crate::{
     api::solution_service::SolutionInserter,
     models::schema,
     xml_parsing::{
-        reader::{EventHandlingError, Router, XmlParser, XmlRouting},
+        reader::{self, EventHandlingError, Router, XmlParser, XmlRouting, XmlRoutingError},
         types::{
             XmlCalendar, XmlCourse, XmlRoom, XmlSession, XmlSolutionClass, XmlSolutionGroup,
             XmlStudent, XmlTeacher,
@@ -49,7 +49,12 @@ pub async fn post_route(
         None => return Result::Err(actix_error::ErrorBadRequest("No content")),
     };
 
-    web::block(move || {
+    enum BlockError {
+        DbError(diesel::result::Error),
+        ExtractFileError(ExtractFileError),
+    }
+
+    web::block(move || -> Result<UploadResult, BlockError> {
         let mut conn = pool.get().expect("couldn't get db connection from pool");
 
         let mut solution_inserter = SolutionInserter::new(
@@ -63,29 +68,66 @@ pub async fn post_route(
                 schema::solutions::created_at.eq(&Utc::now().naive_utc()),
             ),
         )
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| BlockError::DbError(e))?;
 
         debug!("Solution inserted");
 
         extract_file(payload.file.file.path(), &mut solution_inserter)
-            .map_err(|e| e.to_string())?;
+            .map_err(|e| BlockError::ExtractFileError(e))?;
 
         debug!("File extracted ");
 
-        return solution_inserter
+        let db_result = solution_inserter
             .insert_all_into_db()
             .map(|inserted| UploadResult {
                 id: solution_inserter.solution_id(),
                 row_inserted: inserted,
             })
-            .map_err(|e| e.to_string());
+            .map_err(|e| BlockError::DbError(e))?;
+
+        return Ok(db_result);
     })
     .await?
     .map(|result| HttpResponse::Ok().json(result))
-    .map_err(|e| actix_error::ErrorBadRequest(format!("Error while processing the file : {e}")))
+    .map_err(|e| match e {
+        BlockError::DbError(dbe) => actix_error::ErrorFailedDependency(format!(
+            "Error while interacting with the database : {:?}",
+            dbe
+        )),
+        BlockError::ExtractFileError(ExtractFileError::FileOpeningError(fe)) => {
+            actix_error::ErrorInternalServerError(format!(
+                "Error while opening the file : {:?}",
+                fe
+            ))
+        }
+        BlockError::ExtractFileError(ExtractFileError::RoutingError(re)) => match re {
+            XmlRoutingError::RoutingError(e) => actix_error::ErrorInternalServerError(format!(
+                "Error while parsing the file : {:?}",
+                e
+            )),
+            XmlRoutingError::HandlingError(reader::EventHandlingError::DeserializationError(
+                de,
+            )) => {
+                actix_error::ErrorBadRequest(format!("Error while deserializing a tag: {:?}", de))
+            }
+            XmlRoutingError::HandlingError(reader::EventHandlingError::UnsupportedEventType) => {
+                actix_error::ErrorInternalServerError(format!(
+                    "Error while trying to deserialize an Event....the code is buggy :("
+                ))
+            }
+        },
+    })
 }
 
-fn extract_file(file: &Path, solution_inserter: &mut SolutionInserter) -> Result<(), String> {
+enum ExtractFileError {
+    RoutingError(XmlRoutingError<EventHandlingError>),
+    FileOpeningError(quick_xml::Error),
+}
+
+fn extract_file(
+    file: &Path,
+    solution_inserter: &mut SolutionInserter,
+) -> Result<(), ExtractFileError> {
     let mut router: Router<BufReader<File>, EventHandlingError, SolutionInserter> = vec![
         XmlRouting {
             route: vec!["timetabling", "rooms", "room"],
@@ -193,11 +235,12 @@ fn extract_file(file: &Path, solution_inserter: &mut SolutionInserter) -> Result
         },
     ];
 
-    let mut parser = XmlParser::from_file(file).map_err(|e| e.to_string())?;
+    let mut parser =
+        XmlParser::from_file(file).map_err(|e| ExtractFileError::FileOpeningError(e))?;
 
     parser
         .walk_buffer(&mut router, solution_inserter)
-        .map_err(|e| format!("{:?}", e))?;
+        .map_err(|e| ExtractFileError::RoutingError(e))?;
 
     return Ok(());
 }

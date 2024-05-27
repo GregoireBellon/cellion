@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<timetabling xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" name="bad_xml_structure">
+
+    <calendar startingWeek="36" year="2023">
+        <!-- la date prise pour le début correspond à la semaine 36 de l'année 2023 elle commence le lundi -->
+        <weeks nr="24" sequence="1,2,4,5,7-27" />
+        <!-- 1 correspond semaine 36, 2 semaine 37, 3 semaine 39, 4 semaine 41 ... -->
+        <!-- nolint -->
+        <days nr="5" sequence="1,2,3,4,5">
+            <!-- Correspond à Lundi mardi mercredi jeudi vendredi (format iso dimanche=0 , lundi=1 ,... -->
+            <slots nr="1440" />
+        </calendar>
+
+        <rooms>
+            <room id="Amphi-A-EVAL" capacity="45" label="Bât.A,Amphithéâtre,Examen" />
+            <room id="Amphi-B-EVAL" capacity="143" label="Bât.A,Amphithéâtre,Examen" />
+            <room id="Amphi-D-EVAL" capacity="148" label="Bât.A,Amphithéâtre,Examen" />
+            <room id="Amphi-E-EVAL" capacity="91" label="Bât.A,Amphithéâtre,Examen" />
+            <room id="Amphi-L001-EVAL" capacity="50" label="Bât.L,Amphithéâtre,Examen" />
+            <room id="Amphi-L002-EVAL" capacity="100" label="Bât.L,Amphithéâtre,Examen" />
+            <room id="Amphi-L003-EVAL" capacity="50" label="Bât.L,Amphithéâtre,Examen" />
+            <room id="Amphi-L004-EVAL" capacity="75" label="Bât.L,Amphithéâtre,Examen" />
+            <room id="Amphi-L005-EVAL" capacity="75" label="Bât.L,Amphithéâtre,Examen" />
+            <room id="Amphi-L006-EVAL" capacity="100" label="Bât.L,Amphithéâtre,Examen" />
+        </rooms>
+    </timetabling>        
