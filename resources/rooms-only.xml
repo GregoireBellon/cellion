@@ -1,0 +1,150 @@
+<?xml version="1.0"?>
+<timetabling xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="usp_timetabling_v1_2.xsd" name="ua_l1_p1-p2_l3-info_2023_v2">
+
+    <calendar startingWeek="36" year="2023">
+        <!-- la date prise pour le début correspond à la semaine 36 de l'année 2023 elle commence le lundi -->
+        <weeks nr="24" sequence="1,2,4,5,7-27" />
+        <!-- 1 correspond semaine 36, 2 semaine 37, 3 semaine 39, 4 semaine 41 ... -->
+        <days nr="5" sequence="1,2,3,4,5" />
+        <!-- Correspond à Lundi mardi mercredi jeudi vendredi (format iso dimanche=0 , lundi=1 ,... -->
+        <slots nr="1440" />
+    </calendar>
+
+    <rooms>
+        <room id="Amphi-A-EVAL" capacity="45" label="Bât.A,Amphithéâtre,Examen" />
+        <room id="Amphi-B-EVAL" capacity="143" label="Bât.A,Amphithéâtre,Examen" />
+        <room id="Amphi-D-EVAL" capacity="148" label="Bât.A,Amphithéâtre,Examen" />
+        <room id="Amphi-E-EVAL" capacity="91" label="Bât.A,Amphithéâtre,Examen" />
+        <room id="Amphi-L001-EVAL" capacity="50" label="Bât.L,Amphithéâtre,Examen" />
+        <room id="Amphi-L002-EVAL" capacity="100" label="Bât.L,Amphithéâtre,Examen" />
+        <room id="Amphi-L003-EVAL" capacity="50" label="Bât.L,Amphithéâtre,Examen" />
+        <room id="Amphi-L004-EVAL" capacity="75" label="Bât.L,Amphithéâtre,Examen" />
+        <room id="Amphi-L005-EVAL" capacity="75" label="Bât.L,Amphithéâtre,Examen" />
+        <room id="Amphi-L006-EVAL" capacity="100" label="Bât.L,Amphithéâtre,Examen" />
+        <!-- end file rooms_sciences_eval.xml -->
+        <!-- file rooms_sciences.xml -->
+        <room id="Amphi-A" capacity="90" label="Bât.A,Amphithéâtre,Amphithéâtre" />
+        <room id="Amphi-B" capacity="286" label="Bât.A,Amphithéâtre,Amphithéâtre" />
+        <room id="Amphi-D" capacity="296" label="Bât.A,Amphithéâtre,Amphithéâtre" />
+        <room id="Amphi-E" capacity="182" label="Bât.A,Amphithéâtre,Amphithéâtre" />
+        <room id="Amphi-L001" capacity="100" label="Bât.L,Amphithéâtre,Amphithéâtre" />
+        <room id="Amphi-L002" capacity="200" label="Bât.L,Amphithéâtre,Amphithéâtre" />
+        <room id="Amphi-L003" capacity="100" label="Bât.L,Amphithéâtre,Amphithéâtre" />
+        <room id="Amphi-L004" capacity="150" label="Bât.L,Amphithéâtre,Amphithéâtre" />
+        <room id="Amphi-L005" capacity="150" label="Bât.L,Amphithéâtre,Amphithéâtre" />
+        <room id="Amphi-L006" capacity="200" label="Bât.L,Amphithéâtre,Amphithéâtre" />
+        <room id="A018" capacity="40" label="Bât.A,Salle,réunion/cours" />
+        <room id="A020" capacity="20" label="Bât.A,Salle,réunion/cours" />
+        <room id="A115" capacity="20" label="Bât.A',Salle,Informatique" />
+        <room id="A116" capacity="40" label="Bât.A',Salle,Cours / TD" />
+        <room id="A117" capacity="40" label="Bât.A',Salle,Cours / TD" />
+        <room id="A118" capacity="30" label="Bât.A',Salle,Cours / TD" />
+        <room id="A119" capacity="30" label="Bât.A',Salle,Cours / TD" />
+        <room id="A120" capacity="40" label="Bât.A',Salle,Cours / TD" />
+        <room id="B002" capacity="20" label="Bât.B,Salle,Travaux pratiques" />
+        <room id="B003" capacity="20" label="Bât.B,Salle,Travaux pratiques" />
+        <room id="B005" capacity="20" label="Bât.B,Salle,Travaux pratiques" />
+        <room id="B006" capacity="22" label="Bât.B,Salle,Travaux pratiques" />
+        <room id="B'107" capacity="24" label="Bât.B',Salle,Travaux pratiques" />
+        <room id="B'108" capacity="20" label="Bât.B',Salle,Travaux pratiques" />
+        <room id="C002" capacity="40" label="Bât.C,Salle,Travaux pratiques" />
+        <room id="C004" capacity="40" label="Bât.C,Salle,Travaux pratiques" />
+        <room id="D003" capacity="20" label="Bât.D,Salle,Travaux pratiques" />
+        <room id="D005" capacity="20" label="Bât.D,Salle,Travaux pratiques" />
+        <room id="Da001" capacity="12" label="Bât.Da,Salle,Travaux pratiques" />
+        <room id="Da003" capacity="12" label="Bât.Da,Salle,Travaux pratiques" />
+        <room id="Da004" capacity="16" label="Bât.Da,Salle,Travaux pratiques" />
+        <room id="Da005" capacity="20" label="Bât.Da,Salle,Travaux pratiques" />
+        <room id="Da101" capacity="29" label="Bât.Da,Salle,Cours / TD" />
+        <room id="Da102" capacity="20" label="Bât.Da,Salle,Travaux pratiques" />
+        <room id="Da107" capacity="24" label="Bât.Da,Salle,Cours / TD" />
+        <room id="Da106" capacity="10" label="Bât.Da,Salle,Travaux pratiques" />
+        <room id="Da201" capacity="24" label="Bât.Da,Salle,Travaux pratiques" />
+        <room id="Da207" capacity="18" label="Bât.Da,Salle,Cours / TD" />
+        <room id="E001" capacity="20" label="Bât.E,Salle,Travaux pratiques" />
+        <room id="E002" capacity="20" label="Bât.E,Salle,Travaux pratiques" />
+        <room id="F001" capacity="22" label="Bât.F,Salle,Travaux pratiques" />
+        <room id="F002" capacity="22" label="Bât.F,Salle,Travaux pratiques" />
+        <room id="F003" capacity="20" label="Bât.F,Salle,Travaux pratiques" />
+        <room id="F004" capacity="20" label="Bât.F,Salle,Travaux pratiques" />
+        <room id="F101" capacity="16" label="Bât.F,Salle,Travaux pratiques" />
+        <room id="F102" capacity="26" label="Bât.F,Salle,Travaux pratiques" />
+        <room id="G001" capacity="20" label="Bât.G,Salle,Travaux pratiques" />
+        <room id="G002" capacity="20" label="Bât.G,Salle,Travaux pratiques" />
+        <room id="G003" capacity="25" label="Bât.G,Salle,Travaux pratiques" />
+        <room id="G101" capacity="20" label="Bât.G,Salle,Informatique" />
+        <room id="G102" capacity="20" label="Bât.G,Salle,Informatique" />
+        <room id="G103" capacity="20" label="Bât.G,Salle,Informatique" />
+        <room id="G104" capacity="20" label="Bât.G,Salle,Informatique" />
+        <room id="G105" capacity="16" label="Bât.G,Salle,Informatique" />
+        <room id="G204" capacity="20" label="Bât.G,Salle,Informatique" />
+        <room id="G205" capacity="24" label="Bât.G,Salle,Informatique" />
+        <room id="H001" capacity="20" label="Bât.H,Salle,Informatique" />
+        <room id="H002" capacity="42" label="Bât.H,Salle,Informatique" />
+        <room id="H003" capacity="38" label="Bât.H,Salle,Informatique" />
+        <room id="H004" capacity="38" label="Bât.H,Salle,Informatique" />
+        <room id="H005" capacity="12" label="Bât.H,Salle,Informatique" />
+        <room id="H006" capacity="35" label="Bât.H,Salle,Informatique" />
+        <room id="H007-H008" capacity="36" label="Bât.H,Salle,Informatique" />
+        <room id="H113" capacity="16" label="Bât.H,Salle,Informatique" />
+        <room id="H217" capacity="20" label="Bât.H,Salle,Cours / TD" />
+        <room id="I001" capacity="36" label="Bât.I,Salle,Cours / TD" />
+        <room id="I002" capacity="44" label="Bât.I,Salle,Cours / TD" />
+        <room id="I003" capacity="44" label="Bât.I,Salle,Cours / TD" />
+        <room id="I004" capacity="48" label="Bât.I,Salle,Cours / TD" />
+        <room id="I005" capacity="44" label="Bât.I,Salle,Cours / TD" />
+        <room id="I006" capacity="40" label="Bât.I,Salle,Cours / TD" />
+        <room id="I008" capacity="21" label="Bât.I,Salle,Cours / TD" />
+        <room id="I109" capacity="12" label="Bât.I,Salle,Informatique" />
+        <room id="J004" capacity="20" label="Bât.J,Salle,Travaux pratiques" />
+        <room id="J005" capacity="20" label="Bât.J,Salle,Travaux pratiques" />
+        <room id="J104" capacity="20" label="Bât.J,Salle,Travaux pratiques" />
+        <room id="J105" capacity="20" label="Bât.J,Salle,Travaux pratiques" />
+        <room id="LS01" capacity="171" label="Bât.L,Salle,Examen" />
+        <room id="L101" capacity="44" label="Bât.L,Salle,Cours / TD" />
+        <room id="L102" capacity="46" label="Bât.L,Salle,Cours / TD" />
+        <room id="L103" capacity="46" label="Bât.L,Salle,Cours / TD" />
+        <room id="L104" capacity="44" label="Bât.L,Salle,Cours / TD" />
+        <room id="L105" capacity="44" label="Bât.L,Salle,Cours / TD" />
+        <room id="L106" capacity="37" label="Bât.L,Salle,Cours / TD" />
+        <room id="L107" capacity="46" label="Bât.L,Salle,Cours / TD" />
+        <room id="L108" capacity="40" label="Bât.L,Salle,Informatique" />
+        <room id="L201" capacity="46" label="Bât.L,Salle,Cours / TD" />
+        <room id="L202" capacity="46" label="Bât.L,Salle,Cours / TD" />
+        <room id="L203" capacity="48" label="Bât.L,Salle,Cours / TD" />
+        <room id="L204" capacity="46" label="Bât.L,Salle,Cours / TD" />
+        <room id="L205" capacity="48" label="Bât.L,Salle,Cours / TD" />
+        <room id="L206" capacity="28" label="Bât.L,Salle,Cours / TD" />
+        <room id="L207" capacity="24" label="Bât.L,Salle,Cours / TD" />
+        <room id="L208" capacity="24" label="Bât.L,Salle,Cours / TD" />
+        <room id="L209" capacity="28" label="Bât.L,Salle,Cours / TD" />
+        <room id="L210" capacity="48" label="Bât.L,Salle,Cours / TD" />
+        <room id="L211" capacity="20" label="Bât.L,Salle,Informatique" />
+        <room id="L212" capacity="16" label="Bât.L,Salle,Informatique" />
+        <room id="L218" capacity="12" label="Bât.L,Salle,Informatique" />
+        <room id="L219" capacity="12" label="Bât.L,Salle,Informatique" />
+        <room id="L220" capacity="18" label="Bât.L,Salle,Informatique" />
+        <room id="L221" capacity="32" label="Bât.L,Salle,Informatique" />
+        <room id="L222" capacity="32" label="Bât.L,Salle,Informatique" />
+        <room id="L229" capacity="18" label="Bât.L,Salle,Cours / TD" />
+        <room id="L230" capacity="18" label="Bât.L,Salle,Cours / TD" />
+        <room id="L231" capacity="18" label="Bât.L,Salle,Cours / TD" />
+        <room id="L232" capacity="16" label="Bât.L,Salle,Cours / TD" />
+        <!-- end file rooms_sciences.xml -->
+    </rooms>
+    <courses>
+    </courses>
+    <students>
+    </students>
+    <rules>
+    </rules>
+    <solution>
+        <groups>
+        </groups>
+        <classes>
+        </classes>
+        <sessions>
+            <session></session>
+        </sessions>
+    </solution>
+</timetabling>

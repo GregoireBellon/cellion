@@ -1,7 +1,7 @@
 use std::ops::Deref;
 
 use diesel::{QueryResult, RunQueryDsl, SqliteConnection};
-use log::error;
+use log::{error, warn};
 
 use crate::models::{
     db::{
@@ -44,6 +44,8 @@ where
             None => break,
         }
     }
+
+    // debug!("query : {}", query);
 
     let ret = f(query);
 
@@ -193,19 +195,27 @@ impl BufferHandler {
             },
         )?;
 
-        nb_inserted += use_query(
-            "sessions_teachers(session_id, teacher_id, solution_id)",
-            &mut self.sessions_teachers_to_insert_queries,
-            &mut self.rows_to_insert,
-            |q| diesel::sql_query(q).execute(conn),
-        )?;
+        if self.sessions_teachers_to_insert_queries.len() > 0 {
+            nb_inserted += use_query(
+                "sessions_teachers(session_id, teacher_id, solution_id)",
+                &mut self.sessions_teachers_to_insert_queries,
+                &mut self.rows_to_insert,
+                |q| diesel::sql_query(q).execute(conn),
+            )?;
+        } else {
+            warn!("No Sessions teachers inserted, are sessions parsed well ?")
+        }
 
-        nb_inserted += use_query(
-            "sessions_rooms(session_id, room_id, solution_id)",
-            &mut self.sessions_rooms_to_insert_queries,
-            &mut self.rows_to_insert,
-            |q| diesel::sql_query(q).execute(conn),
-        )?;
+        if self.sessions_rooms_to_insert_queries.len() > 0 {
+            nb_inserted += use_query(
+                "sessions_rooms(session_id, room_id, solution_id)",
+                &mut self.sessions_rooms_to_insert_queries,
+                &mut self.rows_to_insert,
+                |q| diesel::sql_query(q).execute(conn),
+            )?;
+        } else {
+            warn!("No Sessions rooms inserted, are sessions parsed well ?")
+        }
 
         nb_inserted += use_buffer(
             &mut self.classes_groups_to_insert,

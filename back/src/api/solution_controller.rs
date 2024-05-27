@@ -137,18 +137,6 @@ fn extract_file(
 ) -> Result<(), ExtractFileError> {
     let mut router: Router<BufReader<File>, EventHandlingError, SolutionInserter> = vec![
         XmlRouting {
-            route: vec!["timetabling", "rooms", "room"],
-            handler: Box::from(
-                |event: Event,
-                 parser: &mut XmlParser<BufReader<File>>,
-                 context: &mut SolutionInserter| {
-                    return parser.handle_event(event, |room: XmlRoom| {
-                        context.add_room(room);
-                    });
-                },
-            ),
-        },
-        XmlRouting {
             route: vec!["timetabling", "teachers", "teacher"],
             handler: Box::from(
                 |event: Event,
@@ -185,12 +173,26 @@ fn extract_file(
             ),
         },
         XmlRouting {
+            route: vec!["timetabling", "rooms", "room"],
+            handler: Box::from(
+                |event: Event,
+                 parser: &mut XmlParser<BufReader<File>>,
+                 context: &mut SolutionInserter| {
+                    return parser.handle_event(event, |room: XmlRoom| {
+                        // debug!("Adding room : {:?}", room);
+                        context.add_room(room);
+                    });
+                },
+            ),
+        },
+        XmlRouting {
             route: vec!["timetabling", "solution", "sessions", "session"],
             handler: Box::from(
                 |event: Event,
                  parser: &mut XmlParser<BufReader<File>>,
                  context: &mut SolutionInserter| {
                     return parser.handle_event(event, |session: XmlSession| {
+                        // debug!("Inserting a session {:?}", session);
                         context
                             .add_session(session)
                             .inspect_err(|e| {

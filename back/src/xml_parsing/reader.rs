@@ -9,6 +9,7 @@ use log::error;
 use quick_xml::{
     de::from_str,
     events::{self, Event},
+    name::QName,
     DeError, Reader, Writer,
 };
 use serde::de::DeserializeOwned;
@@ -81,47 +82,56 @@ impl<'a, R: BufRead> XmlParser<R> {
                     Event::Eof => break,
 
                     Event::Start(bs) => {
-                        current_route.push(
-                            String::from_str(str::from_utf8(bs.name().into_inner()).unwrap())
-                                .unwrap(),
-                        );
-                        self.route_xml_event(event, router, &mut current_route, context)
+                        current_route.push(Self::qname_to_string(&bs.name()));
+                        let consumed_event = self
+                            .route_xml_event(event, router, &mut current_route, context)
                             .map_err(XmlRoutingError::HandlingError)?;
+
+                        if consumed_event {
+                            current_route.pop();
+                        }
                     }
 
                     Event::End(_) => {
-                        let res = self.route_xml_event(event, router, &mut current_route, context);
                         current_route.pop();
-
-                        res.map_err(XmlRoutingError::HandlingError)?
                     }
 
-                    _ => self
-                        .route_xml_event(event, router, &mut current_route, context)
-                        .map_err(XmlRoutingError::HandlingError)?,
+                    Event::Empty(e) => {
+                        current_route.push(Self::qname_to_string(&e.name()));
+                        self.route_xml_event(event, router, &mut current_route, context)
+                            .map_err(XmlRoutingError::HandlingError)?;
+                        current_route.pop();
+                    }
+
+                    _ => {}
                 },
             };
         }
         return Result::Ok(());
     }
 
+    fn qname_to_string(name: &QName) -> String {
+        String::from_str(str::from_utf8(name.into_inner()).unwrap()).unwrap()
+    }
+
+    // match the route with the router, returns true if it consumed the event
     fn route_xml_event<E, Context>(
         &mut self,
         event: Event,
         router: &mut Router<'a, R, E, Context>,
         current_route: &mut Vec<String>,
         context: &mut Context,
-    ) -> Result<(), E> {
+    ) -> Result<bool, E> {
+        // debug!("In {:?}", current_route);
         for routing in router {
+            // debug!("comparing with {:?}", routing.route);
             if check_eq_vecs(&routing.route, current_route) {
                 let ret = (&mut routing.handler)(event, self, context);
-
-                // pop the route because the handle consumes the xml element
-                current_route.pop();
-                return ret;
+                return ret.map(|_| true);
             }
         }
-        return Ok(());
+
+        return Ok(false);
     }
 
     pub fn handle_event<T: DeserializeOwned, F, Ret>(

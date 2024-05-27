@@ -131,23 +131,26 @@ impl<'a> SolutionInserter<'a> {
 
         session.teachers.map(|teachs| {
             teachs.teachers_id.into_iter().for_each(|t| {
-                self.buffer_handler.sessions_teachers_to_insert_queries.push(format!(
+                let query = format!(
                     r#"
                         (SELECT id from sessions WHERE rank = {} AND class_id = "{}" AND solution_id = {}), "{}", "{}"
                     "#, session.rank, session.class.clone(), self.solution_id, t.ref_id, self.solution_id
-                ));
-
+                );
+                // debug!("query for session_teacher: {}", query);
+                self.buffer_handler.sessions_teachers_to_insert_queries.push(query);
                 self.buffer_handler.on_add_callback(self.conn);
             })
         });
 
         session.rooms.map(|s_rooms| {
             s_rooms.rooms_id.into_iter().for_each(|r| {
-                self.buffer_handler.sessions_rooms_to_insert_queries.push(format!(
+                let query = format!(
                     r#"
                         (SELECT id from sessions WHERE rank = {} AND class_id = "{}" AND solution_id = {}), "{}", "{}"
                     "#, session.rank, session.class.clone(), self.solution_id, r.ref_id, self.solution_id
-                ));
+                );
+
+                self.buffer_handler.sessions_rooms_to_insert_queries.push(query);
 
                 self.buffer_handler.on_add_callback(self.conn);
             })
