@@ -1,4 +1,5 @@
 val.db
+val.db-journal
 dockerignore
 docker
 target
