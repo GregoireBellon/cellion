@@ -20,7 +20,7 @@ env:
   IMAGE_NAME: ${{ inputs.image-name }}
 
 jobs:
-  build-and-push-back:
+  build-and-push-image:
     runs-on: ubuntu-latest
 
     permissions:
