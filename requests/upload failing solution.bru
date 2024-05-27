@@ -1,0 +1,15 @@
+meta {
+  name: upload failing solution
+  type: http
+  seq: 6
+}
+
+post {
+  url: {{base_url}}/solutions
+  body: multipartForm
+  auth: none
+}
+
+body:multipart-form {
+  solution: @file(/home/grego/Documents/Cours/cellion/resources/bad_xml_structure.xml)
+}
