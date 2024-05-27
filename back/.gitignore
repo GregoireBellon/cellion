@@ -14,3 +14,4 @@ Cargo.lock
 *.pdb
 
 val.db
+val.db-journal

@@ -141,8 +141,12 @@ diesel::joinable!(parts -> solutions (solution_id));
 diesel::joinable!(rooms -> solutions (solution_id));
 diesel::joinable!(sessions -> solutions (solution_id));
 diesel::joinable!(sessions_rooms -> sessions (session_id));
+diesel::joinable!(sessions_rooms -> solutions (solution_id));
 diesel::joinable!(sessions_teachers -> sessions (session_id));
 diesel::joinable!(sessions_teachers -> solutions (solution_id));
+diesel::joinable!(students -> solutions (solution_id));
+diesel::joinable!(students_groups -> solutions (solution_id));
+diesel::joinable!(teachers -> solutions (solution_id));
 
 diesel::allow_tables_to_appear_in_same_query!(
     classes,

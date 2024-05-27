@@ -1,6 +1,6 @@
 -- Your SQL goes here
 CREATE TABLE rooms(
-    solution_id INTEGER NOT NULL REFERENCES solutions,
+    solution_id INTEGER NOT NULL REFERENCES solutions ON DELETE CASCADE,
     id TEXT NOT NULL,
     capacity INTEGER,
     name TEXT,
