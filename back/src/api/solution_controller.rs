@@ -3,7 +3,7 @@ use std::{fs::File, io::BufReader, path::Path, str};
 use actix_multipart::form::{tempfile::TempFile, MultipartForm};
 use actix_web::{error as actix_error, post, web, Error as ActixError, HttpResponse, Responder};
 use chrono::Utc;
-use diesel::ExpressionMethods;
+use diesel::{Connection, ExpressionMethods};
 use log::{debug, warn};
 use quick_xml::events::Event;
 use serde::Serialize;
@@ -53,39 +53,46 @@ pub async fn post_route(
         DbError(diesel::result::Error),
         ExtractFileError(ExtractFileError),
     }
+    impl From<diesel::result::Error> for BlockError {
+        fn from(value: diesel::result::Error) -> Self {
+            BlockError::DbError(value)
+        }
+    }
 
     web::block(move || -> Result<UploadResult, BlockError> {
         let mut conn = pool.get().expect("couldn't get db connection from pool");
 
-        let mut solution_inserter = SolutionInserter::new(
-            &mut conn,
-            &(
-                schema::solutions::filename.eq(payload
-                    .file
-                    .file_name
-                    .as_deref()
-                    .unwrap_or("UNKNOWN")),
-                schema::solutions::created_at.eq(&Utc::now().naive_utc()),
-            ),
-        )
-        .map_err(|e| BlockError::DbError(e))?;
-
-        debug!("Solution inserted");
-
-        extract_file(payload.file.file.path(), &mut solution_inserter)
-            .map_err(|e| BlockError::ExtractFileError(e))?;
-
-        debug!("File extracted ");
-
-        let db_result = solution_inserter
-            .insert_all_into_db()
-            .map(|inserted| UploadResult {
-                id: solution_inserter.solution_id(),
-                row_inserted: inserted,
-            })
+        return conn.transaction(|trans_conn| {
+            let mut solution_inserter = SolutionInserter::new(
+                trans_conn,
+                &(
+                    schema::solutions::filename.eq(payload
+                        .file
+                        .file_name
+                        .as_deref()
+                        .unwrap_or("UNKNOWN")),
+                    schema::solutions::created_at.eq(&Utc::now().naive_utc()),
+                ),
+            )
             .map_err(|e| BlockError::DbError(e))?;
 
-        return Ok(db_result);
+            debug!("Solution inserted");
+
+            extract_file(payload.file.file.path(), &mut solution_inserter)
+                .map_err(|e| BlockError::ExtractFileError(e))?;
+
+            debug!("File extracted ");
+
+            let db_result = solution_inserter
+                .insert_all_into_db()
+                .map(|inserted| UploadResult {
+                    id: solution_inserter.solution_id(),
+                    row_inserted: inserted,
+                })
+                .map_err(|e| BlockError::DbError(e))?;
+
+            return Ok(db_result);
+        });
     })
     .await?
     .map(|result| HttpResponse::Ok().json(result))
