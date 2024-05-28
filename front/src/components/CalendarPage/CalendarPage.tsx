@@ -32,6 +32,8 @@ import { ShortSessionInfo } from "../../types/core";
 import { toast } from "react-toastify";
 import { VisuallyHiddenInput } from "../VisuallyHiddenInput";
 import { timestampStrToDateTime } from "../../utils/dates";
+import ImportErrorDialog from "./ImportErrorDialog";
+import { isAxiosError } from "axios";
 
 interface Props {
   solutionId: string;
@@ -98,6 +100,13 @@ const CalendarPage: FC<Props> = ({ solutionId }) => {
 
   const [calendarLoading, setCalendarLoading] = useState<boolean>(false);
 
+  const [importError, setImportError] = useState<string | null>(null);
+
+  const importErrorDialogOpen = useMemo(
+    () => importError !== null,
+    [importError]
+  );
+
   const initialFullCalendarDate = useMemo(
     () =>
       initialSearchParamFrom?.current?.isValid
@@ -136,7 +145,14 @@ const CalendarPage: FC<Props> = ({ solutionId }) => {
   }, []);
 
   const handleImportSolutionClick = useCallback(() => {
-    hiddenInputRef.current?.click();
+    if (hiddenInputRef.current) {
+      hiddenInputRef.current.value = "";
+      hiddenInputRef.current.click();
+    }
+  }, []);
+
+  const handleImportErrorDialogClose = useCallback(() => {
+    setImportError(null);
   }, []);
 
   const handleExportJSONClick = useCallback(() => {
@@ -260,6 +276,9 @@ const CalendarPage: FC<Props> = ({ solutionId }) => {
         navigate(`/calendar/${data.id}`);
       } catch (err) {
         console.error((err as Error).message);
+        if (isAxiosError(err)) {
+          setImportError(err.response?.data);
+        }
       }
     },
     [navigate]
@@ -382,6 +401,11 @@ const CalendarPage: FC<Props> = ({ solutionId }) => {
         onChange={handleImportSolution}
         type="file"
         accept=".xml"
+      />
+      <ImportErrorDialog
+        open={importErrorDialogOpen}
+        onClose={handleImportErrorDialogClose}
+        error={importError ?? ""}
       />
     </>
   );
