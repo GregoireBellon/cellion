@@ -1,4 +1,6 @@
 # Cellion
+![image](https://github.com/GregoireBellon/cellion/assets/115778756/4160a5d9-2307-4401-876e-91c2e40a4177)
+
 ## Description
 
 Ce projet est la version 2 du projet [Calendar-viewer](https://github.com/bessantoy/Calendar-viewer). Le projet Calendar-viewer avait pour but de visualiser les résultats d'un [solveur de problème d'emploi du temps](https://ua-usp.github.io/timetabling/), mais il souffrait de lenteurs dues à la grande quantitée de données traitées dans le navigateur.
