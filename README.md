@@ -35,6 +35,15 @@ Installation de [cargo-watch](https://github.com/watchexec/cargo-watch
 
 `cargo install cargo-watch`
 
+Créer un fichier .env en prenant exemple sur le fichier .env.example
+
+```bash
+# .env.example
+
+DATABASE_URL=val.db
+RUST_LOG=info
+```
+
 Mise en place de la base de données
 
 ```bash
