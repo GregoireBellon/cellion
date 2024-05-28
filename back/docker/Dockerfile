@@ -1,6 +1,6 @@
 FROM rust:alpine as build
 
-RUN apk add sqlite-static sqlite-dev musl-dev
+RUN apk add --no-cache sqlite-static sqlite-dev musl-dev
 
 WORKDIR /usr/src/build
 
