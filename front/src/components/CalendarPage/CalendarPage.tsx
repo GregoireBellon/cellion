@@ -100,12 +100,9 @@ const CalendarPage: FC<Props> = ({ solutionId }) => {
 
   const [calendarLoading, setCalendarLoading] = useState<boolean>(false);
 
-  const [importError, setImportError] = useState<string | null>(null);
-
-  const importErrorDialogOpen = useMemo(
-    () => importError !== null,
-    [importError]
-  );
+  const [importError, setImportError] = useState<string>("");
+  const [importErrorDialogOpen, setImportErrorDialogOpen] =
+    useState<boolean>(false);
 
   const initialFullCalendarDate = useMemo(
     () =>
@@ -152,7 +149,7 @@ const CalendarPage: FC<Props> = ({ solutionId }) => {
   }, []);
 
   const handleImportErrorDialogClose = useCallback(() => {
-    setImportError(null);
+    setImportErrorDialogOpen(false);
   }, []);
 
   const handleExportJSONClick = useCallback(() => {
@@ -278,6 +275,7 @@ const CalendarPage: FC<Props> = ({ solutionId }) => {
         console.error((err as Error).message);
         if (isAxiosError(err)) {
           setImportError(err.response?.data);
+          setImportErrorDialogOpen(true);
         }
       }
     },
@@ -405,7 +403,7 @@ const CalendarPage: FC<Props> = ({ solutionId }) => {
       <ImportErrorDialog
         open={importErrorDialogOpen}
         onClose={handleImportErrorDialogClose}
-        error={importError ?? ""}
+        error={importError}
       />
     </>
   );
