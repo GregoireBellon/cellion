@@ -13,5 +13,5 @@ cellion_docker_front_image_tag: "{{ lookup('env', 'FRONT_IMAGE_TAG') }}"
 cellion_docker_back_image_name: "{{ lookup('env', 'BACK_IMAGE_NAME') }}"
 cellion_docker_back_image_tag: "{{ lookup('env', 'BACK_IMAGE_TAG') }}"
 cellion_back_log_level: "info"
-cellion_port: 8080
+cellion_port: 8081
 cellion_host: "0.0.0.0"
