@@ -1,13 +1,23 @@
 services:
   back:
-    image: ghcr.io/gregoirebellon/cellion-back:main
-    env_file:
-      - ./back/.env
+    build:
+      context: ./back
+      dockerfile: docker/Dockerfile
+    environment:
+      - DATABASE_URL=/usr/src/app/data/val.db
+      - RUST_LOG=info
+    volumes:
+      - sqlite:/usr/src/app/data
   front:
-    image: ghcr.io/gregoirebellon/cellion-front:main
+    build:
+      context: ./front
+      dockerfile: docker/Dockerfile
     environment:
       - BACK_REF=back
     ports:
       - 8080:80
     depends_on:
       - back
+
+volumes:
+  sqlite:
