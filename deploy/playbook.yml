@@ -17,7 +17,7 @@
       community.docker.docker_compose_v2:
         pull: "always"
         recreate: "always"
-        project_name: cellion
+        project_name: cellion_alt
         definition:
           services:
             back:
