@@ -10,7 +10,7 @@ use serde::Serialize;
 
 use crate::{
     api::solution_service::SolutionInserter,
-    models::schema,
+    db::schema,
     xml_parsing::{
         reader::{self, EventHandlingError, Router, XmlParser, XmlRouting, XmlRoutingError},
         types::{

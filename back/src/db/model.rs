@@ -2,7 +2,7 @@ use chrono::NaiveDateTime;
 use diesel::{dsl::Eq, prelude::*};
 use serde::Serialize;
 
-use crate::models::schema;
+use crate::db::schema;
 
 pub type InsertSolution<'a> = (
     Eq<schema::solutions::filename, &'a str>,

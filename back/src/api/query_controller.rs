@@ -13,7 +13,7 @@ use crate::{
         do_with_db,
         query_service::{get_filter_list, get_sessions_with_filters},
     },
-    models::{db::Solution, schema},
+    db::{model::Solution, schema},
     DbPool,
 };
 

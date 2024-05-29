@@ -6,7 +6,7 @@ use diesel::{
     RunQueryDsl, SqliteConnection,
 };
 
-use crate::models::schema;
+use crate::db::schema;
 
 use super::{
     query_controller::FilterList,

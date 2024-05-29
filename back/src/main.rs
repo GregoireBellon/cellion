@@ -6,7 +6,7 @@ use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use log::{error, info};
 
 mod api;
-mod models;
+mod db;
 mod xml_parsing;
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!();

@@ -3,8 +3,8 @@ use std::ops::Deref;
 use diesel::{QueryResult, RunQueryDsl, SqliteConnection};
 use log::{error, warn};
 
-use crate::models::{
-    db::{
+use crate::db::{
+    model::{
         Class, ClassGroupOwn, ClassRoomOwn, ClassTeacherOwn, Course, Part, Room, Session,
         SolutionGroupOwn, Student, StudentGroupOwn, Teacher,
     },

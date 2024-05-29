@@ -1,8 +1,8 @@
 use diesel::{self, ExpressionMethods, QueryResult, RunQueryDsl, SqliteConnection};
 use uuid::Uuid;
 
-use crate::models::{
-    db::{
+use crate::db::{
+    model::{
         last_insert_rowid, Class, ClassGroupOwn, ClassRoomOwn, ClassTeacherOwn, Course,
         InsertSolution, Part, Room, Session, SolutionGroupOwn, Student, StudentGroupOwn, Teacher,
     },
