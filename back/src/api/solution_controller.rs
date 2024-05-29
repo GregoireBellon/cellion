@@ -11,14 +11,15 @@ use serde::Serialize;
 use crate::{
     api::solution_service::SolutionInserter,
     db::schema,
-    xml_parsing::{
-        reader::{self, EventHandlingError, Router, XmlParser, XmlRouting, XmlRoutingError},
-        types::{
-            XmlCalendar, XmlCourse, XmlRoom, XmlSession, XmlSolutionClass, XmlSolutionGroup,
-            XmlStudent, XmlTeacher,
-        },
+    xml_parsing::reader::{
+        self, EventHandlingError, Router, XmlParser, XmlRouting, XmlRoutingError,
     },
     DbPool,
+};
+
+use super::xml_types::{
+    XmlCalendar, XmlCourse, XmlRoom, XmlSession, XmlSolutionClass, XmlSolutionGroup, XmlStudent,
+    XmlTeacher,
 };
 
 #[derive(MultipartForm)]

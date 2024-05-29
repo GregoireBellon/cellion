@@ -3,7 +3,7 @@ use std::{str::FromStr, usize};
 use chrono::{Datelike, Days, Local, NaiveDate, NaiveDateTime, NaiveTime, TimeZone, Utc};
 use log::warn;
 
-use crate::xml_parsing::types::XmlCalendar;
+use super::xml_types::XmlCalendar;
 
 pub struct CalendarHandler {
     pub starting_date: NaiveDateTime,

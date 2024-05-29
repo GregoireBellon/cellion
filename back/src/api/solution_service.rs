@@ -9,7 +9,7 @@ use crate::db::{
     schema::{self},
 };
 
-use crate::xml_parsing::types::{
+use super::xml_types::{
     XmlCalendar, XmlClass, XmlCourse, XmlGroupClasses, XmlGroupStudents, XmlPart, XmlRoom,
     XmlSession, XmlSolutionClass, XmlSolutionClassRooms, XmlSolutionClassTeachers,
     XmlSolutionGroup, XmlStudent, XmlTeacher,
