@@ -3,22 +3,17 @@ use std::future::Future;
 use actix_web::{web, Scope};
 use diesel::r2d2::{self, ManageConnection, PooledConnection};
 
-mod buffer_handler;
-mod calendar_handler;
-mod query_controller;
-mod query_service;
-mod solution_controller;
-mod solution_service;
-mod solutions_dto;
-mod xml_types;
+pub mod dto;
+mod query;
+mod solution;
 
 pub fn get_scope() -> Scope {
     actix_web::web::scope("/solutions")
-        .service(solution_controller::post_route)
-        .service(query_controller::get_availables_filters)
-        .service(query_controller::get_availables_solutions)
-        .service(query_controller::get_solution)
-        .service(query_controller::get_sessions)
+        .service(solution::controller::post_route)
+        .service(query::controller::get_availables_filters)
+        .service(query::controller::get_availables_solutions)
+        .service(query::controller::get_solution)
+        .service(query::controller::get_sessions)
 }
 
 pub fn do_with_db<F, R, M>(

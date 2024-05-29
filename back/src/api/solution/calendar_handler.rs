@@ -187,7 +187,7 @@ pub fn parse_str_seq_to_association_table(seq: &str, seq_size: usize) -> Result<
 mod tests {
     use chrono::{TimeZone, Utc};
 
-    use crate::api::calendar_handler::{
+    use crate::api::solution::calendar_handler::{
         create_sequence_association_table, extract_starting_date,
         parse_str_seq_to_association_table, parse_str_to_sequence, CalendarHandler,
         Sequence::{self, Elem, Range},

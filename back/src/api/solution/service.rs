@@ -9,13 +9,16 @@ use crate::db::{
     schema::{self},
 };
 
-use super::xml_types::{
-    XmlCalendar, XmlClass, XmlCourse, XmlGroupClasses, XmlGroupStudents, XmlPart, XmlRoom,
-    XmlSession, XmlSolutionClass, XmlSolutionClassRooms, XmlSolutionClassTeachers,
-    XmlSolutionGroup, XmlStudent, XmlTeacher,
+use super::{
+    calendar_handler::CalendarHandler,
+    xml_types::{
+        XmlCalendar, XmlClass, XmlCourse, XmlGroupClasses, XmlGroupStudents, XmlPart, XmlRoom,
+        XmlSession, XmlSolutionClass, XmlSolutionClassRooms, XmlSolutionClassTeachers,
+        XmlSolutionGroup, XmlStudent, XmlTeacher,
+    },
 };
 
-use super::{buffer_handler::BufferHandler, calendar_handler::CalendarHandler};
+use super::buffer_handler::BufferHandler;
 
 pub struct SolutionInserter<'a> {
     conn: &'a mut SqliteConnection,

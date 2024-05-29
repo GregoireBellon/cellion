@@ -6,15 +6,15 @@ use diesel::{
     RunQueryDsl, SqliteConnection,
 };
 
-use crate::db::schema;
-
-use super::{
-    query_controller::FilterList,
-    solutions_dto::{
+use crate::{
+    api::dto::{
         ShortCourseInfo, ShortGroupInfo, ShortPartInfo, ShortRoomInfo, ShortSessionInfo,
         ShortTeacherInfo,
     },
+    db::schema,
 };
+
+use super::controller::FilterList;
 
 struct ShortSessionInfoMap {
     pub id: String,

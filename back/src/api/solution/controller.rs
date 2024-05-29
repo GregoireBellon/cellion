@@ -9,7 +9,7 @@ use quick_xml::events::Event;
 use serde::Serialize;
 
 use crate::{
-    api::solution_service::SolutionInserter,
+    api::solution::service::SolutionInserter,
     db::schema,
     xml_parsing::reader::{
         self, EventHandlingError, Router, XmlParser, XmlRouting, XmlRoutingError,

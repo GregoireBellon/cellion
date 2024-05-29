@@ -9,13 +9,12 @@ use diesel::{
 use serde::{Deserialize, Serialize};
 
 use crate::{
-    api::{
-        do_with_db,
-        query_service::{get_filter_list, get_sessions_with_filters},
-    },
+    api::do_with_db,
     db::{model::Solution, schema},
     DbPool,
 };
+
+use super::service::{get_filter_list, get_sessions_with_filters};
 
 #[derive(Serialize)]
 pub struct FilterList {
