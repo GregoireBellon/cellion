@@ -13,7 +13,7 @@ services:
       context: ./front
       dockerfile: docker/Dockerfile
     environment:
-      - BACK_REF=back
+      - BACK_REF=http://back:5000
     ports:
       - 8080:80
     depends_on:

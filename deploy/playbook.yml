@@ -1,12 +1,12 @@
 ---
-- name: Setup the app 
+- name: Setup the app
   hosts: all
   vars_files:
     - vars.yml
   roles:
-    - {role: geerlingguy.pip, become: true}
-    - {role: geerlingguy.docker, become: true}
-  
+    - { role: geerlingguy.pip, become: true }
+    - { role: geerlingguy.docker, become: true }
+
   tasks:
     - name: Logout from ghcr to be able to pull public image
       community.docker.docker_login:
@@ -30,12 +30,10 @@
             front:
               image: "{{ cellion_docker_registry }}/{{ cellion_docker_front_image_name }}:{{ cellion_docker_front_image_tag }}"
               environment:
-                - BACK_REF=back
+                - BACK_REF=http://back:5000
               ports:
                 - "{{ cellion_host }}:{{ cellion_port }}:80"
               depends_on:
                 - back
           volumes:
             sqlite:
-
-              
